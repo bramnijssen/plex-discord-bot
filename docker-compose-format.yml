@@ -4,3 +4,5 @@ services:
   bot:
     build: ./plexdiscordbot
     image: plexdiscordbot
+    env_file:
+      - .env
