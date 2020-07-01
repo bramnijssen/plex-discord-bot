@@ -1,2 +1,7 @@
 docker-compose.yml
-.env
+
+# plexdiscordbot
+plexdiscordbot/__pycache__
+plexdiscordbot/.idea
+plexdiscordbot/.env
+plexdiscordbot/db.db

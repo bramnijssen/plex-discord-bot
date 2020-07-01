@@ -1,12 +1,20 @@
-import discord
-from plexapi.server import PlexServer
+import logging
+from dotenv import load_dotenv
+import database
+from discord.ext import commands
 import os
+import asyncio
 
-client = discord.Client()
-plex = PlexServer(os.environ.get("PDB_PLEX_BASEURL"), os.environ.get("PDB_PLEX_TOKEN"))
 
-@client.event
-async def on_ready():
-    print("Logged in as {0.user}".format(client))
+async def init():
+    await database.init()
 
-client.run(os.environ.get("PDB_BOT_TOKEN"))
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    load_dotenv()
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(init())
+
+    bot = commands.Bot(command_prefix=".")
+    bot.run(os.environ.get("PDB_BOT_TOKEN"))
