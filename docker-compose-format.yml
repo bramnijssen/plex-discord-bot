@@ -1,6 +1,21 @@
 version: '3'
 
 services:
+  
+  postgres:
+    image: postgres:12-alpine
+    restart: always
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
   bot:
-    build: ./plexdiscordbot
+    build: 
+      context: ./plexdiscordbot
+      dockerfile: ./docker/Dockerfile
     image: plexdiscordbot
+    env_file:
+      - .env
+    depends_on:
+      - postgres
