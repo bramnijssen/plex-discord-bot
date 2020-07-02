@@ -1,5 +1,4 @@
 import logging
-from dotenv import load_dotenv
 import database
 from discord.ext import commands
 import os
@@ -11,7 +10,6 @@ async def init():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    load_dotenv()
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init())

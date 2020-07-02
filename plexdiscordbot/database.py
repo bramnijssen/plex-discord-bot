@@ -1,40 +1,40 @@
-import os
-import sqlite3
 import plex
+import psycopg2 as psql
+from psycopg2.extensions import connection, cursor
+from psycopg2.extras import DictCursor
+import os
 import re
 import logging
 
-cur: sqlite3.Cursor
+conn: connection
+cur: cursor
 
 
 async def init():
     await plex.init()
 
-    db = "db.db"
-    exists = os.path.isfile(db)
-    conn = sqlite3.connect(db)
+    global conn
+    conn = psql.connect(dbname=os.environ.get("POSTGRES_DB"), user=os.environ.get("POSTGRES_USER"), password=os.environ.get("POSTGRES_PASSWORD"), host="postgres")
 
     global cur
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=DictCursor)
 
-    if not exists:
-        cur.execute("""
-            CREATE TABLE tv_show (
-                tv_show_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                thetvdb_id INTEGER,
-                title TEXT
-            )
-        """)
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM tv_show
+        LIMIT 1;
+    """)
 
+    if cur.fetchone()[0] == 0:
         tv_shows = await plex.get_all_tv_shows()
 
         for show in tv_shows:
-            id = re.findall(r"\d+", show.guid)[0]
+            thetvdb_id = re.findall(r"\d+", show.guid)[0]
             title = show.title
 
             cur.execute("""
                 INSERT INTO tv_show (thetvdb_id, title)
-                VALUES (?, ?)
-            """, (id, title))
+                VALUES (%s, %s)
+            """, (thetvdb_id, title))
 
         conn.commit()
