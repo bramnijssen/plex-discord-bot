@@ -5,6 +5,7 @@ plex: PlexServer
 
 
 async def init():
+    # Bind server connection to var
     global plex
     plex = PlexServer(os.environ.get("PDB_PLEX_BASEURL"), os.environ.get("PDB_PLEX_TOKEN"))
 
