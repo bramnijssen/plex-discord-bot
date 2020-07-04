@@ -15,12 +15,7 @@ class Commands(Cog):
     # List all TV shows
     @command(name="tvshows")
     async def tv_shows(self, ctx: Context):
-        # Return if via DM. Because of permissions for reaction removal
-        if ctx.guild is None:
-            await ctx.send("`.tvshows` can only be called on the server \U00002639")
-            return
-
-        # Floor divide number of pages
+        # Define page count
         tv_shows = await db.get_all_tv_shows()
         page = 1
         total = len(tv_shows) // 10
@@ -29,7 +24,7 @@ class Commands(Cog):
         if len(tv_shows) % 10 != 0:
             total += 1
 
-        # Embed message generation function
+        # Generate embed for message
         def gen_embed():
             desc = ""
 
@@ -42,13 +37,18 @@ class Commands(Cog):
                 description=desc
             ).set_footer(text=f"Page {page}/{total}")
 
-        msg: discord.Message = await ctx.send(embed=gen_embed())
-
+        # Define arrow emoji
         left = "\U00002B05"
         right = "\U000027A1"
 
-        await msg.add_reaction(left)
-        await msg.add_reaction(right)
+        # Add reactions to message
+        async def add_reactions(message):
+            await message.add_reaction(left)
+            await message.add_reaction(right)
+
+        # Send message and add reactions
+        msg: discord.Message = await ctx.send(embed=gen_embed())
+        await add_reactions(msg)
 
         # Check if message on which reaction was added is previously sent message AND if reacting user is user who
         # executed command
@@ -59,20 +59,45 @@ class Commands(Cog):
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=60)
 
-                if str(reaction.emoji) == left:
-                    # If left pressed on first page, just remove reaction
-                    if page != 1:
-                        page -= 1
-                        await msg.edit(embed=gen_embed())
-                    
-                    await msg.remove_reaction(left, user)
-                elif str(reaction.emoji) == right:
-                    # If right pressed on last page, just remove reaction
-                    if page != total:
-                        page += 1
-                        await msg.edit(embed=gen_embed())
-                    
-                    await msg.remove_reaction(right, user)
+                # If sent via DM, remove message and send new one
+                if ctx.guild is None:
+
+                    if str(reaction.emoji) == left:
+                        # If left reacted on first page, don't decrease page
+                        if page != 1:
+                            page -= 1
+
+                        await msg.delete()
+                        msg = await ctx.send(embed=gen_embed())
+                        await add_reactions(msg)
+
+                    elif str(reaction.emoji) == right:
+                        # If right reacted on last page, don't increase page
+                        if page != total:
+                            page += 1
+
+                        await msg.delete()
+                        msg = await ctx.send(embed=gen_embed())
+                        await add_reactions(msg)
+
+                # If sent on guild, remove reaction and edit message
+                else:
+
+                    if str(reaction.emoji) == left:
+                        # If left reacted on first page, just remove reaction
+                        if page != 1:
+                            page -= 1
+                            await msg.edit(embed=gen_embed())
+
+                        await msg.remove_reaction(left, user)
+
+                    elif str(reaction.emoji) == right:
+                        # If right reacted on last page, just remove reaction
+                        if page != total:
+                            page += 1
+                            await msg.edit(embed=gen_embed())
+
+                        await msg.remove_reaction(right, user)
 
             except asyncio.TimeoutError:
                 # When timeout reached, break
