@@ -13,7 +13,7 @@ class Events(Cog):
 
     @Cog.listener()
     async def on_ready(self):
+        await db.init(self.bot)
+
         for guild in self.bot.guilds:
             logging.info(f"Joined {guild.name} as {self.bot.user}")
-
-        await db.init()
