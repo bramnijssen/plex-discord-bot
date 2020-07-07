@@ -6,22 +6,11 @@ from psycopg2.extras import DictCursor
 import os
 import re
 
-conn: connection
-cur: cursor
+conn: connection = psql.connect(dbname=os.environ.get("POSTGRES_DB"), user=os.environ.get("POSTGRES_USER"), password=os.environ.get("POSTGRES_PASSWORD"), host="postgres")
+cur: cursor = conn.cursor(cursor_factory=DictCursor)
 
 
 async def init(bot):
-    # Init Plex 
-    await plex.init()
-
-    # Bind db connection to var
-    global conn
-    conn = psql.connect(dbname=os.environ.get("POSTGRES_DB"), user=os.environ.get("POSTGRES_USER"), password=os.environ.get("POSTGRES_PASSWORD"), host="postgres")
-
-    # Bind dict cursor to var
-    global cur
-    cur = conn.cursor(cursor_factory=DictCursor)
-
     # If member table empty (i.e. first boot), update db
     cur.execute("""
         SELECT COUNT(*)
