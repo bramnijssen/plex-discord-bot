@@ -18,5 +18,8 @@ if __name__ == '__main__':
 
     # Init bot and link to commands
     bot = commands.Bot(command_prefix=".")
+
     bot.load_extension("commands")
+    bot.load_extension("events")
+
     bot.run(os.environ.get("PDB_BOT_TOKEN"))
