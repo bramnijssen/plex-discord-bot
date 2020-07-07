@@ -67,3 +67,13 @@ async def get_all_tv_shows():
     """)
 
     return cur.fetchall()
+
+
+async def member_exists(discord_id):
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM member
+        WHERE discord_id = (%s);
+    """, (discord_id,))
+
+    return cur.fetchone()[0] == 1
