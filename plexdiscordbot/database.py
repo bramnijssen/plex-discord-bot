@@ -49,7 +49,7 @@ async def update_db(bot: Bot):
     conn.commit()
 
 
-async def get_all_tv_shows():
+def get_all_tv_shows():
     cur.execute("""
         SELECT *
         FROM tv_show;
@@ -58,7 +58,7 @@ async def get_all_tv_shows():
     return cur.fetchall()
 
 
-async def member_exists(discord_id):
+def member_exists(discord_id):
     cur.execute("""
         SELECT COUNT(*)
         FROM member

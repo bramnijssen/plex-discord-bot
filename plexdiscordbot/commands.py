@@ -21,7 +21,7 @@ class Commands(Cog):
     @check(is_member)
     async def tv_shows(self, ctx: Context):
         # Define page count
-        tv_shows = await db.get_all_tv_shows()
+        tv_shows = db.get_all_tv_shows()
         page = 1
         total = len(tv_shows) // 10
 
