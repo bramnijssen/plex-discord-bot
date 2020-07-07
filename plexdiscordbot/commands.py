@@ -1,4 +1,4 @@
-from discord.ext.commands import Cog, Bot, command, Context
+from discord.ext.commands import Cog, Bot, command, Context, check
 import database as db
 import discord
 import asyncio
@@ -8,12 +8,17 @@ def setup(bot):
     bot.add_cog(Commands(bot))
 
 
+def is_member(ctx: Context):
+    return db.member_exists(ctx.author.id)
+
+
 class Commands(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
     # List all TV shows
     @command(name="tvshows")
+    @check(is_member)
     async def tv_shows(self, ctx: Context):
         # Define page count
         tv_shows = await db.get_all_tv_shows()
