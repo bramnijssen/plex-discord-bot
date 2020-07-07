@@ -57,12 +57,12 @@ class Commands(Cog):
 
         # Check if message on which reaction was added is previously sent message AND if reacting user is user who
         # executed command
-        def check(reaction_check, user_check):
-            return reaction_check.message.id == msg.id and user_check == ctx.author
+        def reaction_check(added_reaction, reaction_user):
+            return added_reaction.message.id == msg.id and reaction_user == ctx.author
         
         while True:
             try:
-                reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=60)
+                reaction, user = await self.bot.wait_for("reaction_add", check=reaction_check, timeout=60)
 
                 # If sent via DM, remove message and send new one
                 if ctx.guild is None:
