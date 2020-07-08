@@ -9,4 +9,4 @@ RUN apk update \
 
 RUN pip install --no-cache-dir -r ./docker/requirements.txt
 
-CMD ["./docker/wait-for-it.sh", "postgres:5432", "--", "python", "bot.py"]
+CMD ["python", "bot.py"]

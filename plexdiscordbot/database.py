@@ -3,14 +3,30 @@ import plex
 import psycopg2 as psql
 from psycopg2.extensions import connection, cursor
 from psycopg2.extras import DictCursor
+import logging
+from time import sleep
 import os
 import re
 
-conn: connection = psql.connect(dbname=os.environ.get("POSTGRES_DB"), user=os.environ.get("POSTGRES_USER"), password=os.environ.get("POSTGRES_PASSWORD"), host="postgres")
-cur: cursor = conn.cursor(cursor_factory=DictCursor)
+conn: connection
+cur: cursor
 
 
 async def init(bot):
+    while True:
+        try:
+            global conn
+            conn = psql.connect(dbname=os.environ.get("POSTGRES_DB"), user=os.environ.get("POSTGRES_USER"),
+                                password=os.environ.get("POSTGRES_PASSWORD"), host="postgres")
+            logging.info("DB connected")
+            break
+        except psql.OperationalError:
+            logging.info("Waiting 5 seconds for DB reconnect...")
+            sleep(5)
+
+    global cur
+    cur = conn.cursor(cursor_factory=DictCursor)
+
     # If member table empty (i.e. first boot), update db
     cur.execute("""
         SELECT COUNT(*)
