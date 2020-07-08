@@ -54,56 +54,54 @@ class Commands(Cog):
         # Send message and add reactions
         msg: discord.Message = await ctx.send(embed=gen_embed())
         await add_reactions(msg)
-
-        # Check if message on which reaction was added is previously sent message AND if reacting user is user who
-        # executed command
-        def reaction_check(added_reaction, reaction_user):
-            return added_reaction.message.id == msg.id and reaction_user == ctx.author
         
         while True:
             try:
-                reaction, user = await self.bot.wait_for("reaction_add", check=reaction_check, timeout=60)
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=60)
 
-                # If sent via DM, remove message and send new one
-                if ctx.guild is None:
+                # Check if message on which reaction was added is previously sent message AND if reacting user is
+                # user who executed command
+                if reaction.message.id == msg.id and user == ctx.author:
+                    # If sent via DM, remove message and send new one
+                    if ctx.guild is None:
 
-                    if str(reaction.emoji) == left:
-                        # If left reacted on first page, don't decrease page
-                        if page != 1:
-                            page -= 1
+                        if str(reaction.emoji) == left:
+                            # If left reacted on first page, don't decrease page
+                            if page != 1:
+                                page -= 1
 
-                        await msg.delete()
-                        msg = await ctx.send(embed=gen_embed())
-                        await add_reactions(msg)
+                            await msg.delete()
+                            msg = await ctx.send(embed=gen_embed())
+                            await add_reactions(msg)
 
-                    elif str(reaction.emoji) == right:
-                        # If right reacted on last page, don't increase page
-                        if page != total:
-                            page += 1
+                        elif str(reaction.emoji) == right:
+                            # If right reacted on last page, don't increase page
+                            if page != total:
+                                page += 1
 
-                        await msg.delete()
-                        msg = await ctx.send(embed=gen_embed())
-                        await add_reactions(msg)
+                            await msg.delete()
+                            msg = await ctx.send(embed=gen_embed())
+                            await add_reactions(msg)
 
-                # If sent on guild, remove reaction and edit message
-                else:
+                    # If sent on guild, remove reaction and edit message
+                    else:
 
-                    if str(reaction.emoji) == left:
-                        # If left reacted on first page, just remove reaction
-                        if page != 1:
-                            page -= 1
-                            await msg.edit(embed=gen_embed())
+                        if str(reaction.emoji) == left:
+                            # If left reacted on first page, just remove reaction
+                            if page != 1:
+                                page -= 1
+                                await msg.edit(embed=gen_embed())
 
-                        await msg.remove_reaction(left, user)
-
-                    elif str(reaction.emoji) == right:
-                        # If right reacted on last page, just remove reaction
-                        if page != total:
-                            page += 1
-                            await msg.edit(embed=gen_embed())
-
-                        await msg.remove_reaction(right, user)
+                        elif str(reaction.emoji) == right:
+                            # If right reacted on last page, just remove reaction
+                            if page != total:
+                                page += 1
+                                await msg.edit(embed=gen_embed())
 
             except asyncio.TimeoutError:
                 # When timeout reached, break
                 break
+
+            # If reaction in guild, remove reaction afterwards. From all users except bot
+            if reaction.message.guild is not None and user != self.bot.user:
+                await reaction.remove(user)
