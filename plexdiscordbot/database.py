@@ -82,3 +82,11 @@ def member_exists(discord_id):
     """, (discord_id,))
 
     return cur.fetchone()[0] == 1
+
+
+def insert_member(member):
+    cur.execute("""
+        INSERT INTO member (discord_id)
+        VALUES (%s);
+    """, (member.id,))
+    conn.commit()
