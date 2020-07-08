@@ -21,3 +21,7 @@ class Events(Cog):
     @Cog.listener()
     async def on_member_join(self, member):
         db.insert_member(member)
+
+    @Cog.listener()
+    async def on_member_remove(self, member):
+        db.delete_member(member)

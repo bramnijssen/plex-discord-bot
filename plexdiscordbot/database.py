@@ -90,3 +90,11 @@ def insert_member(member):
         VALUES (%s);
     """, (member.id,))
     conn.commit()
+
+
+def delete_member(member):
+    cur.execute("""
+        DELETE FROM member
+        WHERE discord_id = (%s);
+    """, (member.id,))
+    conn.commit()
