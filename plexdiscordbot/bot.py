@@ -1,8 +1,6 @@
 import logging
-import database
 from discord.ext import commands
 import os
-import asyncio
 
 if __name__ == '__main__':
     # Enable logging
