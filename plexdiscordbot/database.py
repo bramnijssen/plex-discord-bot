@@ -7,6 +7,7 @@ import logging
 from time import sleep
 import os
 import re
+import thetvdb
 
 conn: connection
 cur: cursor
@@ -39,6 +40,8 @@ async def init(bot):
 
 
 async def update_db(bot: Bot):
+    logging.info("Updating DB...")
+
     # Insert tv shows
     tv_shows = await plex.get_all_tv_shows()
 
@@ -47,10 +50,13 @@ async def update_db(bot: Bot):
         thetvdb_id = re.findall(r"\d+", show.guid)[0]
         title = show.title
 
+        # Get slug from TheTVDB     
+        slug = thetvdb.get_series(thetvdb_id)["slug"]
+
         cur.execute("""
-            INSERT INTO tv_show (thetvdb_id, title)
-            VALUES (%s, %s);
-        """, (thetvdb_id, title))
+            INSERT INTO tv_show (thetvdb_id, title, slug)
+            VALUES (%s, %s, %s);
+        """, (thetvdb_id, title, slug))
 
     # Insert guild members
     for guild in bot.guilds:
