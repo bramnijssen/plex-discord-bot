@@ -34,7 +34,10 @@ class Commands(Cog):
             desc = ""
 
             for i in range((page - 1) * 10, page * 10):
-                desc += f"- {tv_shows[i]['title']}\n"
+                title = tv_shows[i]["title"]
+                slug = tv_shows[i]["slug"]
+
+                desc += f"- [{title}](https://thetvdb.com/series/{slug})\n"
 
             return discord.Embed(
                 colour=discord.Colour.from_rgb(229, 160, 13),
