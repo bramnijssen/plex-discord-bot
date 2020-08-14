@@ -104,4 +104,13 @@ def delete_member(discord_id):
         WHERE discord_id = (%s);
     """, (discord_id,))
     conn.commit()
-    
+
+
+def get_member_id(discord_id):
+    cur.execute("""
+        SELECT member_id
+        FROM member
+        WHERE discord_id = (%s);
+    """, (discord_id,))
+
+    return cur.fetchone()[0]
