@@ -90,17 +90,18 @@ def member_exists(discord_id):
     return cur.fetchone()[0] == 1
 
 
-def insert_member(member):
+def insert_member(discord_id):
     cur.execute("""
         INSERT INTO member (discord_id)
         VALUES (%s);
-    """, (member.id,))
+    """, (discord_id,))
     conn.commit()
 
 
-def delete_member(member):
+def delete_member(discord_id):
     cur.execute("""
         DELETE FROM member
         WHERE discord_id = (%s);
-    """, (member.id,))
+    """, (discord_id,))
     conn.commit()
+    
