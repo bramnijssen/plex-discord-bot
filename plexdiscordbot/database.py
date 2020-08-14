@@ -114,3 +114,11 @@ def get_member_id(discord_id):
     """, (discord_id,))
 
     return cur.fetchone()[0]
+
+
+def subscribe(member_id, tv_show_id):
+    cur.execute("""
+        INSERT INTO subscription (member_id, tv_show_id)
+        VALUES (%s, %s);
+    """, (member_id, tv_show_id))
+    conn.commit()
