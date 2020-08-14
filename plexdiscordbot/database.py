@@ -106,6 +106,16 @@ def delete_member(discord_id):
     conn.commit()
 
 
+def search_tv_show(search):
+    cur.execute("""
+        SELECT *
+        FROM tv_show
+        WHERE title ILIKE %s
+    """, (f"%{search}%",))
+
+    return cur.fetchall()
+
+
 def get_member_id(discord_id):
     cur.execute("""
         SELECT member_id
