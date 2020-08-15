@@ -100,13 +100,19 @@ class Commands(Cog):
                                 await msg.edit(embed=gen_embed())
 
             except asyncio.TimeoutError:
+                embed = discord.Embed(
+                    colour=discord.Colour.from_rgb(229, 160, 13),
+                    title="TV Shows",
+                    description=f"\U000023F0 **Timeout reached after {timeout} seconds**"
+                )
+
                 # When timeout reached, send timeout message and break
                 if from_dm:
                     await msg.delete()
-                    await ctx.send(content=f"\U000023F0 **Timeout reached after {timeout} seconds**")
+                    await ctx.send(embed=embed)
 
                 else:
-                    await msg.edit(content=f"\U000023F0 **Timeout reached after {timeout} seconds**", embed=None)
+                    await msg.edit(embed=embed)
                     await msg.clear_reactions()
 
                 break
