@@ -59,45 +59,34 @@ class Commands(Cog):
         while True:
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", timeout=timeout)
+                emoji = str(reaction.emoji)
 
                 # Check if message on which reaction was added is previously sent message AND if reacting user is
                 # user who executed command
-                if reaction.message.id == msg.id and user == ctx.author:
-                    # If sent via DM, remove message and send new one
-                    if from_dm:
-
-                        if str(reaction.emoji) == left:
-                            # If left reacted on first page, don't decrease page
-                            if page != 1:
-                                page -= 1
-
-                            await msg.delete()
-                            msg = await ctx.send(embed=gen_embed())
-                            await add_reactions(msg)
-
-                        elif str(reaction.emoji) == right:
-                            # If right reacted on last page, don't increase page
-                            if page != total:
-                                page += 1
-
-                            await msg.delete()
-                            msg = await ctx.send(embed=gen_embed())
-                            await add_reactions(msg)
-
-                    # If sent on guild, remove reaction and edit message
+                if reaction.message.id == msg.id and user == ctx.author and (emoji == left or emoji == right):
+                    # Change page
+                    if emoji == left:
+                        # If left reacted on first page, don't decrease page
+                        if page != 1:
+                            page -= 1
+                    
                     else:
+                        # If right reacted on last page, don't increase page
+                        if page != total:
+                            page += 1
+                    
+                    # Send/Edit message
+                    if from_dm:
+                        await msg.delete()
+                        msg = await ctx.send(embed=gen_embed())
+                        await add_reactions(msg)
 
-                        if str(reaction.emoji) == left:
-                            # If left reacted on first page, just remove reaction
-                            if page != 1:
-                                page -= 1
-                                await msg.edit(embed=gen_embed())
+                    else:
+                        await msg.edit(embed=gen_embed())
 
-                        elif str(reaction.emoji) == right:
-                            # If right reacted on last page, just remove reaction
-                            if page != total:
-                                page += 1
-                                await msg.edit(embed=gen_embed())
+                # If different reaction on message in guild, remove reaction
+                if reaction.message.guild is not None and reaction.message.id == msg.id and user != self.bot.user:
+                    await reaction.remove(user)
 
             except asyncio.TimeoutError:
                 embed = discord.Embed(
@@ -116,10 +105,6 @@ class Commands(Cog):
                     await msg.clear_reactions()
 
                 break
-
-            # If reaction on message in guild, remove reaction afterwards from all users except bot
-            if reaction.message.guild is not None and reaction.message.id == msg.id and user != self.bot.user:
-                await reaction.remove(user)
 
     # Subscribe to TV Show
     @command()
