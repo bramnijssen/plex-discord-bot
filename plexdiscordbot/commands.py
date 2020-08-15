@@ -1,4 +1,4 @@
-from discord.ext.commands import Cog, Bot, command, Context, check
+from discord.ext.commands import Cog, Bot, command, Context
 import database as db
 import discord
 import asyncio
@@ -40,7 +40,7 @@ class Commands(Cog):
                 description=desc
             ).set_footer(text=f"Page {page}/{total}")
 
-        # Define arrow emoji
+        # Define arrow emojis
         left = "\U00002B05"
         right = "\U000027A1"
 
@@ -121,16 +121,90 @@ class Commands(Cog):
             if reaction.message.guild is not None and reaction.message.id == msg.id and user != self.bot.user:
                 await reaction.remove(user)
 
+    # Subscribe to TV Show
     @command()
     async def subscribe(self, ctx, *, arg):
         res = db.search_tv_show(arg)
-        embed = None
 
-        if len(res) == 0:
-            embed = discord.Embed(
+        # Generate embed for message
+        def gen_embed(desc):
+            return discord.Embed(
                 colour=discord.Colour.from_rgb(229, 160, 13),
                 title="Subscribe",
-                description="\U0000274C No results"
+                description=desc
             )
 
-        await ctx.send(embed=embed)
+        # If no results
+        if len(res) == 0:
+            await ctx.send(embed=gen_embed("\U0000274C No results"))
+
+        # If one result
+        elif len(res) == 1:
+            tv_show_id = res[0]["tv_show_id"]
+            tv_show = res[0]["title"]
+            member_id = db.get_member_id(ctx.author.id)
+            
+            # Check if already subscribed to TV show
+            if db.is_subscribed(member_id, tv_show_id):
+                await ctx.send(embed=gen_embed(f"\U00002757 You are already subscribed to {tv_show}"))
+
+            else:
+                # Define choice emojis
+                yes = "\U00002705"
+                no = "\U0000274C"
+
+                # Send message and add reactions
+                msg: discord.Message = await ctx.send(
+                    embed=gen_embed(f"\U00002753 Do you want to subscribe to {tv_show}?"))
+                await msg.add_reaction(yes)
+                await msg.add_reaction(no)
+
+                timeout = 20
+                from_dm = ctx.guild is None
+                
+                while True:
+                    try:
+                        reaction, user = await self.bot.wait_for("reaction_add", timeout=timeout)
+                        emoji = str(reaction.emoji)
+
+                        # If reaction on correct message equals yes or no AND if reacted by correct user
+                        if reaction.message.id == msg.id and user == ctx.author and (emoji == yes or emoji == no):
+                            # Set correct embed
+                            if emoji == yes:
+                                embed = gen_embed(f"{yes} Subscribed to {tv_show}")
+
+                                # Persist in DB
+                                db.subscribe(member_id, tv_show_id)                        
+
+                            else:
+                                embed = gen_embed(f"{no} Cancelled subscription for {tv_show}")
+
+                            # Send/Edit message
+                            if from_dm:
+                                await msg.delete()
+                                msg = await ctx.send(embed=embed)
+
+                            else:                           
+                                await msg.edit(embed=embed)
+                                await msg.clear_reactions()
+                            
+                            break
+
+                        # If different reaction on message in guild, remove reaction
+                        if reaction.message.guild is not None and reaction.message.id == msg.id \
+                                and user != self.bot.user:
+                            await reaction.remove(user)
+
+                    except asyncio.TimeoutError:
+                        # When timeout reached, send timeout message
+                        embed = gen_embed(f"\U000023F0 Timeout reached after {timeout} seconds")
+
+                        if from_dm:
+                            await msg.delete()
+                            await ctx.send(embed=embed)
+
+                        else:
+                            await msg.edit(embed=embed)
+                            await msg.clear_reactions()
+
+                        break
