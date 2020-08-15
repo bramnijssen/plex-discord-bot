@@ -80,16 +80,6 @@ def get_all_tv_shows():
     return cur.fetchall()
 
 
-def member_exists(discord_id):
-    cur.execute("""
-        SELECT COUNT(*)
-        FROM member
-        WHERE discord_id = (%s);
-    """, (discord_id,))
-
-    return cur.fetchone()[0] == 1
-
-
 def insert_member(discord_id):
     cur.execute("""
         INSERT INTO member (discord_id)
