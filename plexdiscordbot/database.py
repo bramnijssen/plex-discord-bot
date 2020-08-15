@@ -100,7 +100,7 @@ def search_tv_show(search):
     cur.execute("""
         SELECT *
         FROM tv_show
-        WHERE title ILIKE %s
+        WHERE title ILIKE %s;
     """, (f"%{search}%",))
 
     return cur.fetchall()
@@ -122,3 +122,15 @@ def subscribe(member_id, tv_show_id):
         VALUES (%s, %s);
     """, (member_id, tv_show_id))
     conn.commit()
+
+
+def is_subscribed(member_id, tv_show_id):
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM subscription
+        WHERE member_id = %s
+        AND tv_show_id = %s
+        LIMIT 1;
+    """, (member_id, tv_show_id))
+
+    return cur.fetchone()[0] == 1
