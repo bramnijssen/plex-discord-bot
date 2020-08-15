@@ -103,7 +103,7 @@ class Commands(Cog):
                 embed = discord.Embed(
                     colour=discord.Colour.from_rgb(229, 160, 13),
                     title="TV Shows",
-                    description=f"\U000023F0 **Timeout reached after {timeout} seconds**"
+                    description=f"\U000023F0 Timeout reached after {timeout} seconds"
                 )
 
                 # When timeout reached, send timeout message and break
@@ -120,3 +120,17 @@ class Commands(Cog):
             # If reaction on message in guild, remove reaction afterwards from all users except bot
             if reaction.message.guild is not None and reaction.message.id == msg.id and user != self.bot.user:
                 await reaction.remove(user)
+
+    @command()
+    async def subscribe(self, ctx, *, arg):
+        res = db.search_tv_show(arg)
+        embed = None
+
+        if len(res) == 0:
+            embed = discord.Embed(
+                colour=discord.Colour.from_rgb(229, 160, 13),
+                title="Subscribe",
+                description="\U0000274C No results"
+            )
+
+        await ctx.send(embed=embed)
