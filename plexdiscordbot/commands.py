@@ -57,16 +57,19 @@ class Commands(Cog):
         # Send message and add reactions
         msg: discord.Message = await ctx.send(embed=gen_embed())
         await add_reactions(msg)
+
+        timeout = 20
+        from_dm = ctx.guild is None
         
         while True:
             try:
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=60)
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=timeout)
 
                 # Check if message on which reaction was added is previously sent message AND if reacting user is
                 # user who executed command
                 if reaction.message.id == msg.id and user == ctx.author:
                     # If sent via DM, remove message and send new one
-                    if ctx.guild is None:
+                    if from_dm:
 
                         if str(reaction.emoji) == left:
                             # If left reacted on first page, don't decrease page
@@ -102,9 +105,17 @@ class Commands(Cog):
                                 await msg.edit(embed=gen_embed())
 
             except asyncio.TimeoutError:
-                # When timeout reached, break
+                # When timeout reached, send timeout message and break
+                if from_dm:
+                    await msg.delete()
+                    await ctx.send(content=f"\U000023F0 **Timeout reached after {timeout} seconds**")
+
+                else:
+                    await msg.edit(content=f"\U000023F0 **Timeout reached after {timeout} seconds**", embed=None)
+                    await msg.clear_reactions()
+
                 break
 
-            # If reaction in guild, remove reaction afterwards. From all users except bot
-            if reaction.message.guild is not None and user != self.bot.user:
+            # If reaction on message in guild, remove reaction afterwards from all users except bot
+            if reaction.message.guild is not None and reaction.message.id == msg.id and user != self.bot.user:
                 await reaction.remove(user)
