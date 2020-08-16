@@ -8,6 +8,20 @@ def setup(bot):
     bot.add_cog(Commands(bot))
 
 
+def from_dm(ctx):
+    return ctx.guild is None
+
+
+async def msg_embed(msg, ctx, embed):
+    if from_dm(ctx):
+        await msg.delete()
+        await ctx.send(embed=embed)
+
+    else:
+        await msg.edit(embed=embed)
+        await msg.clear_reactions()
+
+
 class Commands(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -54,7 +68,6 @@ class Commands(Cog):
         await add_reactions(msg)
 
         timeout = 20
-        from_dm = ctx.guild is None
         
         while True:
             try:
@@ -76,7 +89,7 @@ class Commands(Cog):
                             page += 1
                     
                     # Send/Edit message
-                    if from_dm:
+                    if from_dm(ctx):
                         await msg.delete()
                         msg = await ctx.send(embed=gen_embed())
                         await add_reactions(msg)
@@ -95,15 +108,7 @@ class Commands(Cog):
                     description=f"\U000023F0 Timeout reached after {timeout} seconds"
                 )
 
-                # When timeout reached, send timeout message and break
-                if from_dm:
-                    await msg.delete()
-                    await ctx.send(embed=embed)
-
-                else:
-                    await msg.edit(embed=embed)
-                    await msg.clear_reactions()
-
+                await msg_embed(msg, ctx, embed)
                 break
 
     # Subscribe to TV Show
@@ -145,7 +150,6 @@ class Commands(Cog):
                 await msg.add_reaction(no)
 
                 timeout = 20
-                from_dm = ctx.guild is None
                 
                 while True:
                     try:
@@ -165,14 +169,7 @@ class Commands(Cog):
                                 embed = gen_embed(f"{no} Cancelled subscription for {tv_show}")
 
                             # Send/Edit message
-                            if from_dm:
-                                await msg.delete()
-                                msg = await ctx.send(embed=embed)
-
-                            else:                           
-                                await msg.edit(embed=embed)
-                                await msg.clear_reactions()
-                            
+                            await msg_embed(msg, ctx, embed)
                             break
 
                         # If different reaction on message in guild, remove reaction
@@ -181,15 +178,5 @@ class Commands(Cog):
                             await reaction.remove(user)
 
                     except asyncio.TimeoutError:
-                        # When timeout reached, send timeout message
-                        embed = gen_embed(f"\U000023F0 Timeout reached after {timeout} seconds")
-
-                        if from_dm:
-                            await msg.delete()
-                            await ctx.send(embed=embed)
-
-                        else:
-                            await msg.edit(embed=embed)
-                            await msg.clear_reactions()
-
+                        await msg_embed(msg, ctx, gen_embed(f"\U000023F0 Timeout reached after {timeout} seconds"))
                         break
