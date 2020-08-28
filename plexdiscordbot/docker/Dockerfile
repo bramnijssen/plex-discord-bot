@@ -5,14 +5,14 @@ WORKDIR /plexdiscordbot
 COPY . .
 
 RUN apk update \
-&& apk add --no-cache gcc musl-dev postgresql-dev bash
+&& apk add --no-cache gcc musl-dev postgresql-dev
 
 RUN pip install --no-cache-dir -r ./docker/requirements.txt
 
 # IMAGE: DEBUGGER
 FROM base as debug
 
-RUN pip install debugpy
+RUN pip install --no-cache-dir debugpy
 
 CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "bot.py"]
 
