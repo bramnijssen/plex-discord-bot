@@ -1,4 +1,4 @@
-FROM python:3-alpine
+FROM python:3-alpine as base
 
 WORKDIR /plexdiscordbot
 
@@ -8,5 +8,15 @@ RUN apk update \
 && apk add --no-cache gcc musl-dev postgresql-dev bash
 
 RUN pip install --no-cache-dir -r ./docker/requirements.txt
+
+# IMAGE: DEBUGGER
+FROM base as debug
+
+RUN pip install debugpy
+
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "bot.py"]
+
+# IMAGE: PRODUCTION
+FROM base as prod
 
 CMD ["python", "bot.py"]

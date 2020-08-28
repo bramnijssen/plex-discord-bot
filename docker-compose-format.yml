@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   
@@ -13,6 +13,7 @@ services:
     build: 
       context: ./plexdiscordbot
       dockerfile: ./docker/Dockerfile
+      target: prod
     image: plexdiscordbot
     env_file:
       - .env
