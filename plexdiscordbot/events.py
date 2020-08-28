@@ -19,11 +19,3 @@ class Events(Cog):
 
         for guild in self.bot.guilds:
             logging.info(f"Joined {guild.name} as {self.bot.user}")
-
-    @Cog.listener()
-    async def on_member_join(self, member):
-        db.insert_member(member.id)
-
-    @Cog.listener()
-    async def on_member_remove(self, member):
-        db.delete_member(member.id)

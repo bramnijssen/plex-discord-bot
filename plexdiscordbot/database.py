@@ -28,10 +28,10 @@ async def init(bot):
     global cur
     cur = conn.cursor(cursor_factory=DictCursor)
 
-    # If member table empty (i.e. first boot), update db
+    # If tv_show table empty (i.e. first boot), update db
     cur.execute("""
         SELECT COUNT(*)
-        FROM member
+        FROM tv_show
         LIMIT 1;
     """)
 
@@ -58,16 +58,6 @@ async def update_db(bot: Bot):
             VALUES (%s, %s, %s);
         """, (thetvdb_id, title, slug))
 
-    # Insert guild members
-    for guild in bot.guilds:
-        for member in guild.members:
-            # Do not add bot id
-            if member.id != bot.user.id:
-                cur.execute("""
-                    INSERT INTO member (discord_id)
-                    VALUES (%s);
-                """, (member.id,))
-
     conn.commit()
 
 
@@ -80,22 +70,6 @@ def get_all_tv_shows():
     return cur.fetchall()
 
 
-def insert_member(discord_id):
-    cur.execute("""
-        INSERT INTO member (discord_id)
-        VALUES (%s);
-    """, (discord_id,))
-    conn.commit()
-
-
-def delete_member(discord_id):
-    cur.execute("""
-        DELETE FROM member
-        WHERE discord_id = (%s);
-    """, (discord_id,))
-    conn.commit()
-
-
 def search_tv_show(search):
     cur.execute("""
         SELECT *
@@ -106,31 +80,22 @@ def search_tv_show(search):
     return cur.fetchall()
 
 
-def get_member_id(discord_id):
+def subscribe(discord_id, tv_show_id):
     cur.execute("""
-        SELECT member_id
-        FROM member
-        WHERE discord_id = (%s);
-    """, (discord_id,))
-
-    return cur.fetchone()[0]
-
-
-def subscribe(member_id, tv_show_id):
-    cur.execute("""
-        INSERT INTO subscription (member_id, tv_show_id)
+        INSERT INTO subscription (discord_id, tv_show_id)
         VALUES (%s, %s);
-    """, (member_id, tv_show_id))
+    """, (discord_id, tv_show_id))
+
     conn.commit()
 
 
-def is_subscribed(member_id, tv_show_id):
+def is_subscribed(discord_id, tv_show_id):
     cur.execute("""
         SELECT COUNT(*)
         FROM subscription
-        WHERE member_id = %s
+        WHERE discord_id = %s
         AND tv_show_id = %s
         LIMIT 1;
-    """, (member_id, tv_show_id))
+    """, (discord_id, tv_show_id))
 
     return cur.fetchone()[0] == 1
