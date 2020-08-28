@@ -12,7 +12,6 @@ services:
   plexdiscordbot:
     build: 
       context: ./plexdiscordbot
-      dockerfile: ./docker/Dockerfile
       target: prod
     image: plexdiscordbot
     env_file:

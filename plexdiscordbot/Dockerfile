@@ -2,12 +2,14 @@ FROM python:3-alpine as base
 
 WORKDIR /plexdiscordbot
 
-COPY . .
+COPY ./requirements.txt ./requirements.txt
 
 RUN apk update \
 && apk add --no-cache gcc musl-dev postgresql-dev
 
-RUN pip install --no-cache-dir -r ./docker/requirements.txt
+RUN pip install --no-cache-dir -r ./requirements.txt
+
+COPY ./src .
 
 # IMAGE: DEBUGGER
 FROM base as debug
