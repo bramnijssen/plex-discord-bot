@@ -99,3 +99,13 @@ def is_subscribed(discord_id, tv_show_id):
     """, (discord_id, tv_show_id))
 
     return cur.fetchone()[0] == 1
+
+
+def unsubscribe(discord_id, tv_show_id):
+    cur.execute("""
+        DELETE FROM subscription
+        WHERE discord_id = %s
+        AND tv_show_id = %s;
+    """, (discord_id, tv_show_id))
+
+    conn.commit()
