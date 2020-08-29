@@ -130,11 +130,13 @@ class Commands(Cog):
                 await msg_timeout(ctx, msg, title, timeout)
                 break
 
-    # Subscribe to TV Show
+    # Change notification setting for TV Show
     @command()
-    async def subscribe(self, ctx, *, arg):
+    async def notify(self, ctx, *, arg):
         res = db.search_tv_show(arg)
-        title = "Subscribe"
+        title = "Notify"
+
+        timeout = 20
 
         # Generate embed for message
         def gen_embed(desc):
@@ -149,54 +151,60 @@ class Commands(Cog):
             tv_show = show["title"]
             discord_id = ctx.author.id
 
+            # Define choice emojis
+            yes = "\U00002705"
+            no = "\U0000274C"
+
+            is_subscribed = db.is_subscribed(discord_id, tv_show_id)
+
             # Check if already subscribed to TV show
-            if db.is_subscribed(discord_id, tv_show_id):
-                await ctx.send(embed=gen_embed(f"\U00002757 You are already subscribed to {tv_show}"))
+            if is_subscribed:
+                embed = gen_embed(f"\U00002757 You are already subscribed to {tv_show}. Do you want to unsubscribe?")
+                embed_yes = gen_embed(f"{yes} Unsubscribed from {tv_show}")
+                embed_no = gen_embed(f"{no} Cancelled unsubscription of {tv_show}")
 
             else:
-                # Define choice emojis
-                yes = "\U00002705"
-                no = "\U0000274C"
+                embed = gen_embed(f"\U00002753 Do you want to subscribe to {tv_show}?")
+                embed_yes = gen_embed(f"{yes} Subscribed to {tv_show}")
+                embed_no = gen_embed(f"{no} Cancelled subscription for {tv_show}")
 
-                # Send message and add reactions
-                msg: discord.Message = await ctx.send(
-                    embed=gen_embed(f"\U00002753 Do you want to subscribe to {tv_show}?"))
-                await msg.add_reaction(yes)
-                await msg.add_reaction(no)
+            # Send message and add reactions
+            msg: discord.Message = await ctx.send(embed=embed)
+            await msg.add_reaction(yes)
+            await msg.add_reaction(no)
 
-                timeout = 20
+            def check(rct, usr):
+                return rct.message.id == msg.id and usr != self.bot.user
+            
+            while True:
+                try:
+                    reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=timeout)
+                    emoji = str(reaction.emoji)
 
-                def check(rct, usr):
-                    return rct.message.id == msg.id and usr != self.bot.user
-                
-                while True:
-                    try:
-                        reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=timeout)
-                        emoji = str(reaction.emoji)
-
-                        # If reaction on correct message equals yes or no AND if reacted by correct user
-                        if user == ctx.author and (emoji == yes or emoji == no):
-                            # Set correct embed
-                            if emoji == yes:
-                                embed = gen_embed(f"{yes} Subscribed to {tv_show}")
-
-                                # Persist in DB
-                                db.subscribe(discord_id, tv_show_id)                        
+                    # If reaction on correct message equals yes or no AND if reacted by correct user
+                    if user == ctx.author and (emoji == yes or emoji == no):
+                        # Set correct embed
+                        if emoji == yes:                           
+                            if is_subscribed:
+                                db.unsubscribe(discord_id, tv_show_id) 
 
                             else:
-                                embed = gen_embed(f"{no} Cancelled subscription for {tv_show}")
+                                db.subscribe(discord_id, tv_show_id)  
 
-                            # Send/Edit message
-                            await msg_embed(ctx, msg, embed)
-                            break
+                            await msg_embed(ctx, msg, embed_yes)                      
 
-                        # Remove reaction
-                        if not from_dm(ctx):
-                            await reaction.remove(user)
-
-                    except asyncio.TimeoutError:
-                        await msg_timeout(ctx, msg, title, timeout)
+                        else:
+                            await msg_embed(ctx, msg, embed_no)
+                        
                         break
+
+                    # Remove reaction
+                    if not from_dm(ctx):
+                        await reaction.remove(user)
+
+                except asyncio.TimeoutError:
+                    await msg_timeout(ctx, msg, title, timeout)
+                    break
 
         # If no results
         if len(res) == 0:
@@ -253,14 +261,13 @@ class Commands(Cog):
                 except ValueError:
                     return False
 
-            timeout = 20
-
             while True:
                 reaction_task = asyncio.create_task(self.bot.wait_for("reaction_add", check=reaction_check))
                 message_task = asyncio.create_task(self.bot.wait_for("message", check=message_check))
 
                 done, pending = await asyncio.wait([reaction_task, message_task], timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
 
+                # Reaction on message
                 if reaction_task in done:
                     for task in done:
                         reaction, user = await task
@@ -286,6 +293,7 @@ class Commands(Cog):
                     if not from_dm(ctx):
                         await reaction.remove(user)
 
+                # Message containing number
                 elif message_task in done:
                     for task in done:
                         message = await task
