@@ -63,7 +63,7 @@ async def update_db(bot: Bot):
 
 def get_all_tv_shows():
     cur.execute("""
-        SELECT *
+        SELECT title, slug
         FROM tv_show;
     """)
 
@@ -72,7 +72,7 @@ def get_all_tv_shows():
 
 def search_tv_show(search):
     cur.execute("""
-        SELECT *
+        SELECT title, slug
         FROM tv_show
         WHERE title ILIKE %s;
     """, (f"%{search}%",))
@@ -109,3 +109,14 @@ def unsubscribe(discord_id, tv_show_id):
     """, (discord_id, tv_show_id))
 
     conn.commit()
+
+
+def get_subscriptions(discord_id):
+    cur.execute("""
+        SELECT t.title, t.slug
+        FROM tv_show t
+        INNER JOIN subscription s ON t.tv_show_id = s.tv_show_id
+        WHERE s.discord_id = %s
+    """, (discord_id,))
+
+    return cur.fetchall()
