@@ -8,6 +8,10 @@ def setup(bot):
     bot.add_cog(Commands(bot))
 
 
+# Message timeout
+timeout = 20
+
+
 # Define arrow (nav) emojis
 left = "\U00002B05"
 right = "\U000027A1"
@@ -97,8 +101,6 @@ class Commands(Cog):
         msg: discord.Message = await ctx.send(embed=gen_page_embed())
         await add_nav_reactions(msg)
 
-        timeout = 20
-
         def check(rct, usr):
             return rct.message.id == msg.id and usr != self.bot.user
         
@@ -135,8 +137,6 @@ class Commands(Cog):
     async def notify(self, ctx, *, arg):
         res = db.search_tv_show(arg)
         title = "Notify"
-
-        timeout = 20
 
         # Generate embed for message
         def gen_embed(desc):
@@ -305,3 +305,83 @@ class Commands(Cog):
                 else:
                     await msg_timeout(ctx, msg, title, timeout)
                     break
+
+    # List subscriptions
+    @command()
+    async def subscriptions(self, ctx: Context):
+        discord_id = ctx.author.id
+        res = db.get_subscriptions(discord_id)
+        title = "Subscriptions"
+
+        # Generate embed for message
+        def gen_embed(desc):
+            return discord.Embed(
+                colour=discord.Colour.from_rgb(229, 160, 13),
+                title=title,
+                description=desc
+            )
+
+        page = 1
+        length = len(res)
+        total = length // 10
+
+        # If remainder exists, add one page
+        if length % 10 != 0:
+            total += 1
+
+        # Generate embed for message
+        def gen_page_embed():
+            desc = ""
+
+            start = (page - 1) * 10
+            end = page * 10
+
+            if page == total and end > length:
+                end = length
+
+            for i in range(start, end):
+                show = res[i]["title"]
+                slug = res[i]["slug"]
+
+                desc += f"- [{show}](https://thetvdb.com/series/{slug})\n"
+
+            return discord.Embed(
+                colour=discord.Colour.from_rgb(229, 160, 13),
+                title=title,
+                description=desc
+            ).set_footer(text=f"Page {page}/{total}")            
+
+        # Send message and add reactions
+        msg: discord.Message = await ctx.send(embed=gen_page_embed())
+        await add_nav_reactions(msg)
+
+        def check(rct, usr):
+            return rct.message.id == msg.id and usr != self.bot.user
+
+        while True:
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=timeout)
+                emoji = str(reaction.emoji)
+
+                if user == ctx.author and (emoji == left or emoji == right):
+                    # Change page
+                    if emoji == left:
+                        # If left reacted on first page, don't decrease page
+                        if page != 1:
+                            page -= 1
+                    
+                    else:
+                        # If right reacted on last page, don't increase page
+                        if page != total:
+                            page += 1
+                    
+                    # Send/Edit message
+                    msg = await msg_embed_nav(ctx, msg, gen_page_embed())
+
+                # Remove reaction
+                if not from_dm(ctx):
+                    await reaction.remove(user)
+
+            except asyncio.TimeoutError:
+                await msg_timeout(ctx, msg, title, timeout)
+                break
