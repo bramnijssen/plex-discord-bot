@@ -58,6 +58,53 @@ async def msg_timeout(ctx, msg, title, timeout):
     await msg_embed(ctx, msg, embed)
 
 
+def total_pages(length):
+    total = length // 10
+
+    # If remainder exists, add one page
+    if length % 10 != 0:
+        total += 1
+
+    return total
+
+
+def bullet_list(db_result, i, desc):
+    show = db_result[i]["title"]
+    slug = db_result[i]["slug"]
+
+    desc += f"- [{show}](https://thetvdb.com/series/{slug})\n"
+    return desc
+
+
+def number_list(db_result, i, desc):
+    show = db_result[i]["title"]
+    slug = db_result[i]["slug"]
+
+    desc += f"{i + 1} | [{show}](https://thetvdb.com/series/{slug})\n"
+    return desc
+
+
+def page_embed(page, db_result, template, title):
+    desc = ""
+    length = len(db_result)
+    total = total_pages(length)
+
+    start = (page - 1) * 10
+    end = page * 10
+
+    if page == total and end > length:
+        end = length
+
+    for i in range(start, end):
+        desc = template(db_result, i, desc)
+
+    return discord.Embed(
+        colour=discord.Colour.from_rgb(229, 160, 13),
+        title=title,
+        description=desc
+    ).set_footer(text=f"Page {page}/{total}")
+
+
 class Commands(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -65,40 +112,13 @@ class Commands(Cog):
     # List all TV shows
     @command(name="tvshows")
     async def tv_shows(self, ctx: Context):
-        # Define page count
         tv_shows = db.get_all_tv_shows()
         title = "TV Shows"
         page = 1
-        total = len(tv_shows) // 10
-
-        # If remainder exists, add one page
-        if len(tv_shows) % 10 != 0:
-            total += 1
-
-        # Generate embed for message
-        def gen_page_embed():
-            desc = ""
-
-            start = (page - 1) * 10
-            end = page * 10
-
-            if page == total and end > len(tv_shows):
-                end = len(tv_shows)
-
-            for i in range(start, end):
-                show = tv_shows[i]["title"]
-                slug = tv_shows[i]["slug"]
-
-                desc += f"- [{show}](https://thetvdb.com/series/{slug})\n"
-
-            return discord.Embed(
-                colour=discord.Colour.from_rgb(229, 160, 13),
-                title=title,
-                description=desc
-            ).set_footer(text=f"Page {page}/{total}")   
+        total = total_pages(len(tv_shows))
 
         # Send message and add reactions
-        msg: discord.Message = await ctx.send(embed=gen_page_embed())
+        msg: discord.Message = await ctx.send(embed=page_embed(page, tv_shows, bullet_list, title))
         await add_nav_reactions(msg)
 
         def check(rct, usr):
@@ -122,7 +142,7 @@ class Commands(Cog):
                             page += 1
                     
                     # Send/Edit message
-                    msg = await msg_embed_nav(ctx, msg, gen_page_embed())
+                    msg = await msg_embed_nav(ctx, msg, page_embed(page, tv_shows, bullet_list, title))
 
                 # Remove reaction
                 if not from_dm(ctx):
@@ -218,36 +238,10 @@ class Commands(Cog):
         else:
             page = 1
             length = len(res)
-            total = length // 10
-
-            # If remainder exists, add one page
-            if length % 10 != 0:
-                total += 1
-
-            # Generate embed for message
-            def gen_page_embed():
-                desc = ""
-
-                start = (page - 1) * 10
-                end = page * 10
-
-                if page == total and end > length:
-                    end = length
-
-                for i in range(start, end):
-                    show = res[i]["title"]
-                    slug = res[i]["slug"]
-
-                    desc += f"{i + 1} | [{show}](https://thetvdb.com/series/{slug})\n"
-
-                return discord.Embed(
-                    colour=discord.Colour.from_rgb(229, 160, 13),
-                    title=title,
-                    description=desc
-                ).set_footer(text=f"Page {page}/{total}")            
+            total = total_pages(length)
 
             # Send message and add reactions
-            msg: discord.Message = await ctx.send(embed=gen_page_embed())
+            msg: discord.Message = await ctx.send(embed=page_embed(page, res, number_list, title))
             await add_nav_reactions(msg)
 
             def reaction_check(rct, usr):
@@ -287,7 +281,7 @@ class Commands(Cog):
                                 page += 1
                         
                         # Send/Edit message
-                        msg = await msg_embed_nav(ctx, msg, gen_page_embed())
+                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, number_list, title))
 
                     # Remove reaction
                     if not from_dm(ctx):
@@ -308,51 +302,15 @@ class Commands(Cog):
 
     # List subscriptions
     @command()
-    async def subscriptions(self, ctx: Context):
+    async def subs(self, ctx: Context):
         discord_id = ctx.author.id
         res = db.get_subscriptions(discord_id)
         title = "Subscriptions"
-
-        # Generate embed for message
-        def gen_embed(desc):
-            return discord.Embed(
-                colour=discord.Colour.from_rgb(229, 160, 13),
-                title=title,
-                description=desc
-            )
-
         page = 1
-        length = len(res)
-        total = length // 10
-
-        # If remainder exists, add one page
-        if length % 10 != 0:
-            total += 1
-
-        # Generate embed for message
-        def gen_page_embed():
-            desc = ""
-
-            start = (page - 1) * 10
-            end = page * 10
-
-            if page == total and end > length:
-                end = length
-
-            for i in range(start, end):
-                show = res[i]["title"]
-                slug = res[i]["slug"]
-
-                desc += f"- [{show}](https://thetvdb.com/series/{slug})\n"
-
-            return discord.Embed(
-                colour=discord.Colour.from_rgb(229, 160, 13),
-                title=title,
-                description=desc
-            ).set_footer(text=f"Page {page}/{total}")            
+        total = total_pages(len(res))   
 
         # Send message and add reactions
-        msg: discord.Message = await ctx.send(embed=gen_page_embed())
+        msg: discord.Message = await ctx.send(embed=page_embed(page, res, bullet_list, title))
         await add_nav_reactions(msg)
 
         def check(rct, usr):
@@ -376,7 +334,7 @@ class Commands(Cog):
                             page += 1
                     
                     # Send/Edit message
-                    msg = await msg_embed_nav(ctx, msg, gen_page_embed())
+                    msg = await msg_embed_nav(ctx, msg, page_embed(page, res, bullet_list, title))
 
                 # Remove reaction
                 if not from_dm(ctx):
