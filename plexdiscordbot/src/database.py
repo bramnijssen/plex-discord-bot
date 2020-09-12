@@ -72,7 +72,7 @@ def get_all_tv_shows():
 
 def search_tv_show(search):
     cur.execute("""
-        SELECT title, slug
+        SELECT *
         FROM tv_show
         WHERE title ILIKE %s;
     """, (f"%{search}%",))
