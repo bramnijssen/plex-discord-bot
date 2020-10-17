@@ -7,7 +7,6 @@ import logging
 from time import sleep
 import os
 import re
-import thetvdb
 
 conn: connection
 cur: cursor
@@ -46,24 +45,19 @@ async def update_db(bot: Bot):
     tv_shows = await plex.get_all_tv_shows()
 
     for show in tv_shows:
-        # Extract TheTVDB id from show guid
-        thetvdb_id = re.findall(r"\d+", show.guid)[0]
         title = show.title
 
-        # Get slug from TheTVDB     
-        slug = thetvdb.get_series(thetvdb_id)["slug"]
-
         cur.execute("""
-            INSERT INTO tv_show (thetvdb_id, title, slug)
-            VALUES (%s, %s, %s);
-        """, (thetvdb_id, title, slug))
+            INSERT INTO tv_show (title)
+            VALUES (%s);
+        """, (title,))
 
     conn.commit()
 
 
 def get_all_tv_shows():
     cur.execute("""
-        SELECT title, slug
+        SELECT title
         FROM tv_show;
     """)
 
@@ -113,7 +107,7 @@ def unsubscribe(discord_id, tv_show_id):
 
 def get_subscriptions(discord_id):
     cur.execute("""
-        SELECT t.title, t.slug
+        SELECT t.title
         FROM tv_show t
         INNER JOIN subscription s ON t.tv_show_id = s.tv_show_id
         WHERE s.discord_id = %s

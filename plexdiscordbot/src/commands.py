@@ -70,17 +70,15 @@ def total_pages(length):
 
 def bullet_list(db_result, i, desc):
     show = db_result[i]["title"]
-    slug = db_result[i]["slug"]
 
-    desc += f"- [{show}](https://thetvdb.com/series/{slug})\n"
+    desc += f"- {show}\n"
     return desc
 
 
 def number_list(db_result, i, desc):
     show = db_result[i]["title"]
-    slug = db_result[i]["slug"]
 
-    desc += f"{i + 1} | [{show}](https://thetvdb.com/series/{slug})\n"
+    desc += f"{i + 1} | {show}\n"
     return desc
 
 
