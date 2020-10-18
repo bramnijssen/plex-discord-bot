@@ -6,13 +6,12 @@ from psycopg2.extras import DictCursor
 import logging
 from time import sleep
 import os
-import re
 
 conn: connection
 cur: cursor
 
 
-async def init(bot):
+def init():
     while True:
         try:
             global conn
@@ -35,22 +34,23 @@ async def init(bot):
     """)
 
     if cur.fetchone()[0] == 0:
-        await update_db(bot)
+        update_db()
 
 
-async def update_db(bot: Bot):
+def update_db():
     logging.info("Updating DB...")
 
     # Insert tv shows
-    tv_shows = await plex.get_all_tv_shows()
+    tv_shows = plex.get_all_tv_shows()
 
     for show in tv_shows:
+        key = show.ratingKey
         title = show.title
 
         cur.execute("""
-            INSERT INTO tv_show (title)
-            VALUES (%s);
-        """, (title,))
+            INSERT INTO tv_show (plex_key, title)
+            VALUES (%s, %s);
+        """, (key, title))
 
     conn.commit()
 
@@ -112,5 +112,19 @@ def get_subscriptions(discord_id):
         INNER JOIN subscription s ON t.tv_show_id = s.tv_show_id
         WHERE s.discord_id = %s
     """, (discord_id,))
+
+    return cur.fetchall()
+
+
+def get_subscriptions_for_tv_show(key):
+    cur.execute("""
+        SELECT *
+        FROM subscription 
+        WHERE tv_show_id = (
+            SELECT tv_show_id
+            FROM tv_show
+            WHERE plex_key = %s
+        );
+    """, (key,))
 
     return cur.fetchall()

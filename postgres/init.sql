@@ -1,5 +1,6 @@
 CREATE TABLE tv_show (
     tv_show_id serial PRIMARY KEY,
+    plex_key int UNIQUE,
     title text
 );
 
