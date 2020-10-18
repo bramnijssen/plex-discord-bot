@@ -305,39 +305,47 @@ class Commands(Cog):
         res = db.get_subscriptions(discord_id)
         title = "Subscriptions"
         page = 1
-        total = total_pages(len(res))   
+        total = total_pages(len(res))
 
-        # Send message and add reactions
-        msg: discord.Message = await ctx.send(embed=page_embed(page, res, bullet_list, title))
-        await add_nav_reactions(msg)
+        if total == 0:
+            embed = discord.Embed(
+                    colour=discord.Colour.from_rgb(229, 160, 13),
+                    title=title,
+                    description="\U0000274C You have no subscriptions"
+                )
+            await ctx.send(embed=embed)
+        else:
+            # Send message and add reactions
+            msg: discord.Message = await ctx.send(embed=page_embed(page, res, bullet_list, title))
+            await add_nav_reactions(msg)
 
-        def check(rct, usr):
-            return rct.message.id == msg.id and usr != self.bot.user
+            def check(rct, usr):
+                return rct.message.id == msg.id and usr != self.bot.user
 
-        while True:
-            try:
-                reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=timeout)
-                emoji = str(reaction.emoji)
+            while True:
+                try:
+                    reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=timeout)
+                    emoji = str(reaction.emoji)
 
-                if user == ctx.author and (emoji == left or emoji == right):
-                    # Change page
-                    if emoji == left:
-                        # If left reacted on first page, don't decrease page
-                        if page != 1:
-                            page -= 1
-                    
-                    else:
-                        # If right reacted on last page, don't increase page
-                        if page != total:
-                            page += 1
-                    
-                    # Send/Edit message
-                    msg = await msg_embed_nav(ctx, msg, page_embed(page, res, bullet_list, title))
+                    if user == ctx.author and (emoji == left or emoji == right):
+                        # Change page
+                        if emoji == left:
+                            # If left reacted on first page, don't decrease page
+                            if page != 1:
+                                page -= 1
+                        
+                        else:
+                            # If right reacted on last page, don't increase page
+                            if page != total:
+                                page += 1
+                        
+                        # Send/Edit message
+                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, bullet_list, title))
 
-                # Remove reaction
-                if not from_dm(ctx):
-                    await reaction.remove(user)
+                    # Remove reaction
+                    if not from_dm(ctx):
+                        await reaction.remove(user)
 
-            except asyncio.TimeoutError:
-                await msg_timeout(ctx, msg, title, timeout)
-                break
+                except asyncio.TimeoutError:
+                    await msg_timeout(ctx, msg, title, timeout)
+                    break
