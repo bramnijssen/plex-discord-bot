@@ -177,7 +177,7 @@ class Commands(Cog):
 
             # Check if already subscribed to TV show
             if is_subscribed:
-                embed = gen_embed(f"\U00002757 You are already subscribed to {tv_show}. Do you want to unsubscribe?")
+                embed = gen_embed(f"\U00002757 You are currently subscribed to {tv_show}. Do you want to unsubscribe?")
                 embed_yes = gen_embed(f"{yes} Unsubscribed from {tv_show}")
                 embed_no = gen_embed(f"{no} Cancelled unsubscription of {tv_show}")
 
