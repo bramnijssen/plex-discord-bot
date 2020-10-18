@@ -1,3 +1,4 @@
+from discord.ext import commands
 from discord.ext.commands import Cog, Bot, command, Context
 import database as db
 import discord
@@ -108,7 +109,7 @@ class Commands(Cog):
         self.bot = bot
 
     # List all TV shows
-    @command(name="tvshows")
+    @command(name="tvshows", help="Lists available TV Shows")
     async def tv_shows(self, ctx: Context):
         tv_shows = db.get_all_tv_shows()
         title = "TV Shows"
@@ -159,10 +160,10 @@ class Commands(Cog):
                     break
 
     # Change notification setting for TV Show
-    @command()
-    async def notify(self, ctx, *, arg):
-        res = db.search_tv_show(arg)
-        title = "Notify"
+    @command(help="Get notified about new episodes from a TV show")
+    async def subscribe(self, ctx, *, search_term):
+        res = db.search_tv_show(search_term)
+        title = "Subscribe"
 
         # Generate embed for message
         def gen_embed(desc):
@@ -306,8 +307,19 @@ class Commands(Cog):
                     await msg_timeout(ctx, msg, title, timeout)
                     break
 
+    # If no search term provided
+    @subscribe.error
+    async def subscribe_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                colour=discord.Colour.from_rgb(229, 160, 13),
+                title="Error",
+                description=error.args[0]
+            )
+            await ctx.send(embed=embed)
+
     # List subscriptions
-    @command()
+    @command(help="Lists subscriptions")
     async def subs(self, ctx: Context):
         discord_id = ctx.author.id
         res = db.get_subscriptions(discord_id)
