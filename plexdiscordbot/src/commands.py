@@ -314,7 +314,7 @@ class Commands(Cog):
             embed = discord.Embed(
                 colour=discord.Colour.from_rgb(229, 160, 13),
                 title="Error",
-                description=error.args[0]
+                description=f"Please enter (parts of) the TV show's name to which you want to subscribe.\n Command usage: `.subscribe {ctx.command.signature}`"
             )
             await ctx.send(embed=embed)
 
