@@ -85,7 +85,7 @@ def number_list(db_result, i, desc):
     return desc
 
 
-def page_embed(page, db_result, template, title):
+def page_embed(page, db_result, template, title, **kwargs):
     desc = ""
     length = len(db_result)
     total = total_pages(length)
@@ -95,6 +95,10 @@ def page_embed(page, db_result, template, title):
 
     if page == total and end > length:
         end = length
+
+    add_msg = kwargs.get('add_msg')
+    if add_msg:
+        desc = f"{add_msg}\n\n"
 
     for i in range(start, end):
         desc = template(db_result, i, desc)
@@ -249,9 +253,10 @@ class Commands(Cog):
             page = 1
             length = len(res)
             total = total_pages(length)
+            add_msg = "Send the number of the show to which you want to subscribe in a new message"
 
             # Send message and add reactions
-            msg: discord.Message = await ctx.send(embed=page_embed(page, res, number_list, title))
+            msg: discord.Message = await ctx.send(embed=page_embed(page, res, number_list, title, add_msg=add_msg))
             await add_nav_reactions(msg)
 
             def reaction_check(rct, usr):
@@ -291,7 +296,7 @@ class Commands(Cog):
                                 page += 1
                         
                         # Send/Edit message
-                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, number_list, title))
+                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, number_list, title, add_msg=add_msg))
 
                     # Remove reaction
                     if not from_dm(ctx):
