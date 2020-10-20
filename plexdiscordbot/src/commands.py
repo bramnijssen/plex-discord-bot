@@ -18,10 +18,14 @@ left = "\U00002B05"
 right = "\U000027A1"
 
 
-async def add_nav_reactions(message):
-    await message.add_reaction(left)
-    await message.add_reaction(right)
+async def add_nav_reactions(msg, page, total):
+    if total != 1:
+        if page != 1:
+            await msg.add_reaction(left)
 
+        if page != total:
+            await msg.add_reaction(right)
+    
 
 def from_dm(ctx):
     return ctx.guild is None
@@ -38,21 +42,18 @@ def gen_embed(title, desc):
 async def msg_embed(ctx, msg, embed):
     if from_dm(ctx):
         await msg.delete()
-        await ctx.send(embed=embed)
-
-    else:
-        await msg.edit(embed=embed)
-        await msg.clear_reactions()
-
-
-async def msg_embed_nav(ctx, msg, embed):
-    if from_dm(ctx):
-        await msg.delete()
         msg = await ctx.send(embed=embed)
-        await add_nav_reactions(msg)
 
     else:
+        await msg.clear_reactions()
         await msg.edit(embed=embed)
+
+    return msg
+
+
+async def msg_embed_nav(ctx, msg, embed, page, total):
+    msg = await msg_embed(ctx, msg, embed)
+    await add_nav_reactions(msg, page, total)
 
     return msg
 
@@ -138,7 +139,7 @@ class Commands(Cog):
         else:
             # Send message and add reactions
             msg: discord.Message = await ctx.send(embed=page_embed(page, res, bullet_list, title))
-            await add_nav_reactions(msg)
+            await add_nav_reactions(msg, page, total)
 
             def check(rct, usr):
                 return rct.message.id == msg.id and usr != self.bot.user
@@ -161,10 +162,10 @@ class Commands(Cog):
                                 page += 1
                         
                         # Send/Edit message
-                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, bullet_list, title))
+                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, bullet_list, title), page, total)
 
                     # Remove reaction
-                    if not from_dm(ctx):
+                    elif not from_dm(ctx):
                         await reaction.remove(user)
 
                 except asyncio.TimeoutError:
@@ -257,7 +258,7 @@ class Commands(Cog):
 
             # Send message and add reactions
             msg: discord.Message = await ctx.send(embed=page_embed(page, res, number_list, title, add_msg=add_msg))
-            await add_nav_reactions(msg)
+            await add_nav_reactions(msg, page, total)
 
             def reaction_check(rct, usr):
                 return rct.message.id == msg.id and usr != self.bot.user
@@ -296,10 +297,10 @@ class Commands(Cog):
                                 page += 1
                         
                         # Send/Edit message
-                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, number_list, title, add_msg=add_msg))
+                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, number_list, title, add_msg=add_msg), page, total)
 
                     # Remove reaction
-                    if not from_dm(ctx):
+                    elif not from_dm(ctx):
                         await reaction.remove(user)
 
                 # Message containing number
