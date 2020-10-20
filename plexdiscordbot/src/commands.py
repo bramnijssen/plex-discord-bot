@@ -112,7 +112,10 @@ class Commands(Cog):
         self.bot = bot
 
     # List all TV shows
-    @command(name="tvshows", help="Lists available TV Shows")
+    @command(
+        aliases=["shows"],
+        name="tvshows", 
+        help="Lists available TV Shows")
     async def tv_shows(self, ctx: Context):
         tv_shows = db.get_all_tv_shows()
         title = "TV Shows"
@@ -121,8 +124,10 @@ class Commands(Cog):
         await self.spreaded_list(tv_shows, title, no_res_desc, ctx)
 
     # List subscriptions
-    @command(help="Lists subscriptions")
-    async def subs(self, ctx: Context):
+    @command(
+        aliases=["subs"],
+        help="Lists subscriptions")
+    async def subscriptions(self, ctx: Context):
         subs = db.get_subscriptions(ctx.author.id)
         title = "Subscriptions"
         no_res_desc = "You have no subscriptions"
@@ -173,7 +178,10 @@ class Commands(Cog):
                     break
 
     # Change notification setting for TV Show
-    @command(help="Subscribe to / Unsubscribe from a TV Show from which you would like to receive notifications when new episodes have been addded")
+    @command(
+        aliases=["sub"], 
+        brief="Subscribe to / Unsubscribe from a TV Show", 
+        help="Subscribe to / Unsubscribe from a TV Show from which you would like to receive notifications when new episodes have been added")
     async def subscribe(self, ctx, *, search_term):
         res = db.search_tv_show(search_term)
         title = "Subscribe"
