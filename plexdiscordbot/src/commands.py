@@ -27,6 +27,14 @@ def from_dm(ctx):
     return ctx.guild is None
 
 
+def gen_embed(title, desc):
+    return discord.Embed(
+        colour=discord.Colour.from_rgb(229, 160, 13),
+        title=title,
+        description=desc
+    )
+
+
 async def msg_embed(ctx, msg, embed):
     if from_dm(ctx):
         await msg.delete()
@@ -50,13 +58,7 @@ async def msg_embed_nav(ctx, msg, embed):
 
 
 async def msg_timeout(ctx, msg, title, timeout):
-    embed = discord.Embed(
-        colour=discord.Colour.from_rgb(229, 160, 13),
-        title=title,
-        description=f"\U000023F0 Timeout reached after {timeout} seconds"
-    )
-
-    await msg_embed(ctx, msg, embed)
+    await msg_embed(ctx, msg, gen_embed(title, f"\U000023F0 Timeout reached after {timeout} seconds"))
 
 
 def total_pages(length):
@@ -97,11 +99,7 @@ def page_embed(page, db_result, template, title):
     for i in range(start, end):
         desc = template(db_result, i, desc)
 
-    return discord.Embed(
-        colour=discord.Colour.from_rgb(229, 160, 13),
-        title=title,
-        description=desc
-    ).set_footer(text=f"Page {page}/{total}")
+    return gen_embed(title, desc).set_footer(text=f"Page {page}/{total}")
 
 
 class Commands(Cog):
@@ -113,24 +111,34 @@ class Commands(Cog):
     async def tv_shows(self, ctx: Context):
         tv_shows = db.get_all_tv_shows()
         title = "TV Shows"
+        no_res_desc = "No TV Shows available"
+        
+        await self.spreaded_list(tv_shows, title, no_res_desc, ctx)
+
+    # List subscriptions
+    @command(help="Lists subscriptions")
+    async def subs(self, ctx: Context):
+        subs = db.get_subscriptions(ctx.author.id)
+        title = "Subscriptions"
+        no_res_desc = "You have no subscriptions"
+
+        await self.spreaded_list(subs, title, no_res_desc, ctx)
+
+    # List spreaded across pages
+    async def spreaded_list(self, res, title, no_res_desc, ctx):
         page = 1
-        total = total_pages(len(tv_shows))
+        total = total_pages(len(res))
 
         if total == 0:
-            embed = discord.Embed(
-                    colour=discord.Colour.from_rgb(229, 160, 13),
-                    title=title,
-                    description="\U0000274C No TV Shows available"
-                )
-            await ctx.send(embed=embed)
+            await ctx.send(embed=gen_embed(title, "\U0000274C " + no_res_desc))
         else:
             # Send message and add reactions
-            msg: discord.Message = await ctx.send(embed=page_embed(page, tv_shows, bullet_list, title))
+            msg: discord.Message = await ctx.send(embed=page_embed(page, res, bullet_list, title))
             await add_nav_reactions(msg)
 
             def check(rct, usr):
                 return rct.message.id == msg.id and usr != self.bot.user
-            
+
             while True:
                 try:
                     reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=timeout)
@@ -149,7 +157,7 @@ class Commands(Cog):
                                 page += 1
                         
                         # Send/Edit message
-                        msg = await msg_embed_nav(ctx, msg, page_embed(page, tv_shows, bullet_list, title))
+                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, bullet_list, title))
 
                     # Remove reaction
                     if not from_dm(ctx):
@@ -160,18 +168,13 @@ class Commands(Cog):
                     break
 
     # Change notification setting for TV Show
-    @command(help="Get notified about new episodes from a TV show")
+    @command(help="Subscribe to / Unsubscribe from a TV Show from which you would like to receive notifications when new episodes have been addded")
     async def subscribe(self, ctx, *, search_term):
         res = db.search_tv_show(search_term)
         title = "Subscribe"
 
-        # Generate embed for message
-        def gen_embed(desc):
-            return discord.Embed(
-                colour=discord.Colour.from_rgb(229, 160, 13),
-                title=title,
-                description=desc
-            )
+        def approve_embed(desc):
+            return gen_embed(title, desc)
 
         async def approve(show):
             tv_show_id = show["tv_show_id"]
@@ -186,14 +189,14 @@ class Commands(Cog):
 
             # Check if already subscribed to TV show
             if is_subscribed:
-                embed = gen_embed(f"\U00002757 You are currently subscribed to {tv_show}. Do you want to unsubscribe?")
-                embed_yes = gen_embed(f"{yes} Unsubscribed from {tv_show}")
-                embed_no = gen_embed(f"{no} Cancelled unsubscription of {tv_show}")
+                embed = approve_embed("\U00002757 You are currently subscribed to {tv_show}. Do you want to unsubscribe?")
+                embed_yes = approve_embed(f"{yes} Unsubscribed from {tv_show}")
+                embed_no = approve_embed(f"{no} Cancelled unsubscription of {tv_show}")
 
             else:
-                embed = gen_embed(f"\U00002753 Do you want to subscribe to {tv_show}?")
-                embed_yes = gen_embed(f"{yes} Subscribed to {tv_show}")
-                embed_no = gen_embed(f"{no} Cancelled subscription for {tv_show}")
+                embed = approve_embed(f"\U00002753 Do you want to subscribe to {tv_show}?")
+                embed_yes = approve_embed(f"{yes} Subscribed to {tv_show}")
+                embed_no = approve_embed(f"{no} Cancelled subscription for {tv_show}")
 
             # Send message and add reactions
             msg: discord.Message = await ctx.send(embed=embed)
@@ -235,7 +238,7 @@ class Commands(Cog):
 
         # If no results
         if len(res) == 0:
-            await ctx.send(embed=gen_embed("\U0000274C No results"))
+            await ctx.send(embed=approve_embed("\U0000274C No results"))
 
         # If one result
         elif len(res) == 1:
@@ -303,6 +306,7 @@ class Commands(Cog):
 
                     await approve(res[num - 1])
 
+                # Timeout
                 else:
                     await msg_timeout(ctx, msg, title, timeout)
                     break
@@ -311,61 +315,4 @@ class Commands(Cog):
     @subscribe.error
     async def subscribe_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
-            embed = discord.Embed(
-                colour=discord.Colour.from_rgb(229, 160, 13),
-                title="Error",
-                description=f"Please enter (parts of) the TV show's name to which you want to subscribe.\n Command usage: `.subscribe {ctx.command.signature}`"
-            )
-            await ctx.send(embed=embed)
-
-    # List subscriptions
-    @command(help="Lists subscriptions")
-    async def subs(self, ctx: Context):
-        discord_id = ctx.author.id
-        res = db.get_subscriptions(discord_id)
-        title = "Subscriptions"
-        page = 1
-        total = total_pages(len(res))
-
-        if total == 0:
-            embed = discord.Embed(
-                    colour=discord.Colour.from_rgb(229, 160, 13),
-                    title=title,
-                    description="\U0000274C You have no subscriptions"
-                )
-            await ctx.send(embed=embed)
-        else:
-            # Send message and add reactions
-            msg: discord.Message = await ctx.send(embed=page_embed(page, res, bullet_list, title))
-            await add_nav_reactions(msg)
-
-            def check(rct, usr):
-                return rct.message.id == msg.id and usr != self.bot.user
-
-            while True:
-                try:
-                    reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=timeout)
-                    emoji = str(reaction.emoji)
-
-                    if user == ctx.author and (emoji == left or emoji == right):
-                        # Change page
-                        if emoji == left:
-                            # If left reacted on first page, don't decrease page
-                            if page != 1:
-                                page -= 1
-                        
-                        else:
-                            # If right reacted on last page, don't increase page
-                            if page != total:
-                                page += 1
-                        
-                        # Send/Edit message
-                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, bullet_list, title))
-
-                    # Remove reaction
-                    if not from_dm(ctx):
-                        await reaction.remove(user)
-
-                except asyncio.TimeoutError:
-                    await msg_timeout(ctx, msg, title, timeout)
-                    break
+            await ctx.send(embed=gen_embed("Error", f"Please enter (parts of) the TV show's name to which you want to subscribe.\n Command usage: `.subscribe {ctx.command.signature}`"))
