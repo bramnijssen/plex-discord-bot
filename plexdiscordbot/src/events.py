@@ -14,6 +14,18 @@ class Events(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
+    @Cog.listener()
+    async def on_ready(self):
+        db.init()
+        plex.start_alert_listener(self.plex_alert)
+
+        for guild in self.bot.guilds:
+            logging.info(f"Joined {guild.name} as {self.bot.user}")
+
+    @Cog.listener()
+    async def on_member_remove(self, member):
+        db.delete_subscriptions(member.id)
+
     async def process_alert(self, data):
         if data['type'] == 'timeline':
 
@@ -66,11 +78,3 @@ class Events(Cog):
 
     def plex_alert(self, data):               
         self.bot.loop.create_task(self.process_alert(data))
-
-    @Cog.listener()
-    async def on_ready(self):
-        db.init()
-        plex.start_alert_listener(self.plex_alert)
-
-        for guild in self.bot.guilds:
-            logging.info(f"Joined {guild.name} as {self.bot.user}")

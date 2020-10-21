@@ -116,6 +116,13 @@ def get_subscriptions(discord_id):
     return cur.fetchall()
 
 
+def delete_subscriptions(discord_id):
+    cur.execute("""
+        DELETE FROM subscription
+        WHERE discord_id = %s;
+    """, (discord_id,))
+
+
 def get_subscriptions_for_tv_show(key):
     cur.execute("""
         SELECT *
