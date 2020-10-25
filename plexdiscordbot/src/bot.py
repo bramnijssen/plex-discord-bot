@@ -1,7 +1,7 @@
 import logging
 import discord
 from discord.ext import commands
-import os
+from os import getenv
 
 if __name__ == '__main__':
     # Enable logging
@@ -16,4 +16,4 @@ if __name__ == '__main__':
     bot.load_extension("commands")
     bot.load_extension("events")
 
-    bot.run(os.environ.get("PDB_BOT_TOKEN"))
+    bot.run(getenv("PDB_BOT_TOKEN"))

@@ -1,7 +1,7 @@
 from plexapi.server import PlexServer
-import os
+from os import getenv
 
-plex: PlexServer = PlexServer(os.environ.get("PDB_PLEX_BASEURL"), os.environ.get("PDB_PLEX_TOKEN"))
+plex: PlexServer = PlexServer(getenv("PDB_PLEX_BASEURL"), getenv("PDB_PLEX_TOKEN"))
 
 
 def start_alert_listener(func):
@@ -9,7 +9,7 @@ def start_alert_listener(func):
 
 
 def get_tv_shows_lib():
-    return plex.library.section(os.environ.get("PDB_PLEX_TV_SHOWS"))
+    return plex.library.section(getenv("PDB_PLEX_TV_SHOWS"))
 
 
 def get_all_tv_shows():

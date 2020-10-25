@@ -5,7 +5,7 @@ from psycopg2.extensions import connection, cursor
 from psycopg2.extras import DictCursor
 import logging
 from time import sleep
-import os
+from os import getenv
 
 conn: connection
 cur: cursor
@@ -15,8 +15,8 @@ def init():
     while True:
         try:
             global conn
-            conn = psql.connect(dbname=os.environ.get("POSTGRES_DB"), user=os.environ.get("POSTGRES_USER"),
-                                password=os.environ.get("POSTGRES_PASSWORD"), host="postgres")
+            conn = psql.connect(dbname=getenv("POSTGRES_DB"), user=getenv("POSTGRES_USER"),
+                                password=getenv("POSTGRES_PASSWORD"), host="postgres")
             logging.info("DB connected")
             break
         except psql.OperationalError:
