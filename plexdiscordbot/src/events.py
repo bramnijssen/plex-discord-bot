@@ -4,6 +4,7 @@ import logging
 import database as db
 import plex
 import datetime
+from os import getenv
 
 
 def setup(bot):
@@ -32,15 +33,45 @@ class Events(Cog):
             # Item created
             if data['TimelineEntry'][0]['state'] == 0:
 
-                # Episode level
-                if data['TimelineEntry'][0]['type'] == 4:
+                # New show
+                if data['TimelineEntry'][0]['type'] == 2:
+
+                    # Get tv show instance
+                    show_key = int(data['TimelineEntry'][0]['itemID'])
+                    show = plex.fetch_tv_show_item(show_key)
+                    show_title = show.title
+
+                    db.add_tv_show(show_key, show_title)
+
+                    channel_id = getenv('PDB_NEW_SHOW_CHANNEL_ID')
+
+                    if channel_id:
+                        # Extract summary from show
+                        summary = show.summary
+
+                        # Generate embed
+                        embed = discord.Embed(
+                            colour=discord.Colour.from_rgb(229, 160, 13),
+                            title=f'New Show - {show_title}',
+                            description=f"{show_title} has been added to the server!"
+                        )
+
+                        # If episode contains summary
+                        if summary:
+                            embed.add_field(name="Summary", value=summary, inline=False)
+
+                        channel = self.bot.get_channel(int(channel_id))
+                        await channel.send(embed=embed)
+
+                # New episode
+                elif data['TimelineEntry'][0]['type'] == 4:
 
                     # Get episode instance
                     episode_key = int(data['TimelineEntry'][0]['itemID'])
                     episode = plex.fetch_tv_show_item(episode_key)
                     
                     show_key = episode.grandparentRatingKey
-                    subs = db.get_subscriptions_for_tv_show(show_key)
+                    subs = db.get_subscriptions_from_plex_key(show_key)
 
                     # If show has subscribers
                     if subs:
@@ -73,7 +104,7 @@ class Events(Cog):
 
                         # Send message to subscribed users
                         for sub in subs:
-                            user = await self.bot.fetch_user(sub['discord_id'])
+                            user = self.bot.get_user(sub['discord_id'])
                             await user.send(embed=embed)
 
     def plex_alert(self, data):               

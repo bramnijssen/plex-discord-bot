@@ -74,6 +74,15 @@ def search_tv_show(search):
     return cur.fetchall()
 
 
+def add_tv_show(plex_key, title):
+    cur.execute("""
+        INSERT INTO tv_show (plex_key, title)
+        VALUES (%s, %s);
+    """, (plex_key, title))
+
+    conn.commit()
+
+
 def subscribe(discord_id, tv_show_id):
     cur.execute("""
         INSERT INTO subscription (discord_id, tv_show_id)
@@ -123,15 +132,12 @@ def delete_subscriptions(discord_id):
     """, (discord_id,))
 
 
-def get_subscriptions_for_tv_show(key):
+def get_subscriptions_from_plex_key(key):
     cur.execute("""
         SELECT *
-        FROM subscription 
-        WHERE tv_show_id = (
-            SELECT tv_show_id
-            FROM tv_show
-            WHERE plex_key = %s
-        );
+        FROM subscription s
+        INNER JOIN tv_show t ON s.tv_show_id = t.tv_show_id
+        WHERE t.plex_key = %s;
     """, (key,))
 
     return cur.fetchall()
