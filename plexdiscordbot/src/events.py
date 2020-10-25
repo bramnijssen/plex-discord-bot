@@ -46,6 +46,12 @@ class Events(Cog):
                     channel_id = getenv('PDB_NEW_SHOW_CHANNEL_ID')
 
                     if channel_id:
+
+                        # Wait for metadata
+                        stop = datetime.datetime.now() + datetime.timedelta(0, 10)
+                        while not show.summary and datetime.datetime.now() < stop:
+                            show = plex.fetch_tv_show_item(show_key)
+
                         # Extract summary from show
                         summary = show.summary
 
@@ -106,6 +112,38 @@ class Events(Cog):
                         for sub in subs:
                             user = self.bot.get_user(sub['discord_id'])
                             await user.send(embed=embed)
+
+            # Item deleted
+            elif data['TimelineEntry'][0]['state'] == 9:
+
+                # Show deleted
+                if data['TimelineEntry'][0]['type'] == 2:
+                    show_key = int(data['TimelineEntry'][0]['itemID'])
+                    subs = db.get_subscriptions_from_plex_key(show_key)
+
+                    # If show has subscribers
+                    if subs:
+                        show_title = subs[0]['title']
+                        tv_show_id = subs[0]['tv_show_id']
+
+                        # Generate embed
+                        embed = discord.Embed(
+                            colour=discord.Colour.from_rgb(229, 160, 13),
+                            title=f'Show Removed - {show_title}',
+                            description=f"Your subscription for {show_title} has been removed since the show has been removed from the server."
+                        )
+
+                        # Send message to subscribed users and remove subscription
+                        for sub in subs:
+                            discord_id = sub['discord_id']
+
+                            user = self.bot.get_user(discord_id)
+                            db.unsubscribe(discord_id, tv_show_id)
+                            await user.send(embed=embed)
+
+                    # Delete show from database
+                    db.delete_tv_show(show_key)
+
 
     def plex_alert(self, data):               
         self.bot.loop.create_task(self.process_alert(data))

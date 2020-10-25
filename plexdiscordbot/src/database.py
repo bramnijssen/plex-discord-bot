@@ -83,6 +83,15 @@ def add_tv_show(plex_key, title):
     conn.commit()
 
 
+def delete_tv_show(plex_key):
+    cur.execute("""
+        DELETE FROM tv_show
+        WHERE plex_key = %s;
+    """, (plex_key,))
+
+    conn.commit()
+
+
 def subscribe(discord_id, tv_show_id):
     cur.execute("""
         INSERT INTO subscription (discord_id, tv_show_id)
