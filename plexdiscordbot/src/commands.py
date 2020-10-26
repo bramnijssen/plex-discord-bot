@@ -77,7 +77,7 @@ class Commands(Cog):
                         await reaction.remove(user)
 
                 except asyncio.TimeoutError:
-                    await msg_timeout(ctx, msg, title, timeout)
+                    await msg_timeout(msg, title)
                     break
 
     # Change notification setting for TV Show
@@ -149,7 +149,7 @@ class Commands(Cog):
                         await reaction.remove(user)
 
                 except asyncio.TimeoutError:
-                    await msg_timeout(ctx, msg, title, timeout)
+                    await msg_timeout(msg, title)
                     break
 
         # If no results
@@ -225,7 +225,7 @@ class Commands(Cog):
 
                 # Timeout
                 else:
-                    await msg_timeout(ctx, msg, title, timeout)
+                    await msg_timeout(msg, title)
                     break
 
     # If no search term provided
