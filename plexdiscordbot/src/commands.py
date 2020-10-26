@@ -105,7 +105,7 @@ class Commands(Cog):
 
             # Check if already subscribed to TV show
             if is_subscribed:
-                embed = approve_embed("\U00002757 You are currently subscribed to {tv_show}. Do you want to unsubscribe?")
+                embed = approve_embed(f"\U00002757 You are currently subscribed to {tv_show}. Do you want to unsubscribe?")
                 embed_yes = approve_embed(f"{yes} Unsubscribed from {tv_show}")
                 embed_no = approve_embed(f"{no} Cancelled unsubscription of {tv_show}")
 
@@ -165,7 +165,7 @@ class Commands(Cog):
             page = 1
             length = len(res)
             total = total_pages(length)
-            add_msg = "Send the number of the show to which you want to subscribe in a new message"
+            add_msg = "Send the number, corresponding to the show to which you want to subscribe, in a new message"
 
             # Send message and add reactions
             msg: discord.Message = await ctx.send(embed=page_embed(page, res, number_list, title, add_msg=add_msg))
@@ -220,6 +220,10 @@ class Commands(Cog):
                         message = await task
 
                     num = int(message.content)
+                    await msg.delete()
+
+                    if not from_dm(ctx):
+                        await message.delete()
 
                     await approve(res[num - 1])
 
