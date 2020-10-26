@@ -1,10 +1,11 @@
 from discord.ext.commands import Cog, Bot
+from os import getenv
+from helpers import gen_embed
 import discord
 import logging
 import database as db
 import plex
 import datetime
-from os import getenv
 
 
 def setup(bot):
@@ -44,7 +45,6 @@ class Events(Cog):
                     db.add_tv_show(show_key, show_title)
 
                     channel_id = getenv('PDB_NEW_SHOW_CHANNEL_ID')
-
                     if channel_id:
 
                         # Wait for metadata
@@ -56,11 +56,7 @@ class Events(Cog):
                         summary = show.summary
 
                         # Generate embed
-                        embed = discord.Embed(
-                            colour=discord.Colour.from_rgb(229, 160, 13),
-                            title=f'New Show - {show_title}',
-                            description=f"{show_title} has been added to the server!"
-                        )
+                        embed = gen_embed(f'New Show - {show_title}', f"{show_title} has been added to the server!")
 
                         # If episode contains summary
                         if summary:
@@ -95,11 +91,7 @@ class Events(Cog):
                         summary = episode.summary
 
                         # Generate embed
-                        embed = discord.Embed(
-                            colour=discord.Colour.from_rgb(229, 160, 13),
-                            title=f'Subscriptions - {show_title}',
-                            description=f"A new episode of {show_title} has been added to the server!"
-                        )
+                        embed = gen_embed(f'Subscriptions - {show_title}', f"A new episode of {show_title} has been added to the server!")
                         embed.add_field(name="Title", value=episode_title)
                         embed.add_field(name="Season", value=season_number)
                         embed.add_field(name="Episode", value=episode_number)
@@ -127,11 +119,7 @@ class Events(Cog):
                         tv_show_id = subs[0]['tv_show_id']
 
                         # Generate embed
-                        embed = discord.Embed(
-                            colour=discord.Colour.from_rgb(229, 160, 13),
-                            title=f'Show Removed - {show_title}',
-                            description=f"Your subscription for {show_title} has been removed since the show has been removed from the server."
-                        )
+                        embed = gen_embed(f'Subscription Removed - {show_title}', f"Your subscription for {show_title} has been removed since the show has been removed from the server.")
 
                         # Send message to subscribed users and remove subscription
                         for sub in subs:
