@@ -17,7 +17,7 @@ class Events(Cog):
 
     @Cog.listener()
     async def on_ready(self):
-        db.init()
+        db.init(self)
         plex.start_alert_listener(self.plex_alert)
 
         for guild in self.bot.guilds:

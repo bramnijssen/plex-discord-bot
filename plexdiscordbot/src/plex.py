@@ -1,3 +1,4 @@
+from plexapi.exceptions import NotFound
 from plexapi.server import PlexServer
 from os import getenv
 
@@ -18,3 +19,7 @@ def get_all_tv_shows():
 
 def fetch_tv_show_item(key):
     return get_tv_shows_lib().fetchItem(key)
+
+
+def get_not_found_exception():
+    return NotFound

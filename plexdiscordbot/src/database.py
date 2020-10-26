@@ -1,13 +1,13 @@
+from os import path
 import plex
 import sqlite3
 import logging
-from os import path
 
 conn: sqlite3.Connection
 cur: sqlite3.Cursor
 
 
-def init():
+def init(events):
     db = 'db/db.db'
     exists = path.exists(db)
 
@@ -20,20 +20,41 @@ def init():
 
     if not exists:
         cur.executescript(open('db/init.sql').read())
-        update_db()
+        
+    update_db(events)
 
 
-def update_db():
+def update_db(events):
     logging.info("Updating DB...")
 
-    # Insert tv shows
-    tv_shows = plex.get_all_tv_shows()
+    def gen_data(state, tv_show_id):
+        return {
+            'type': 'timeline',
+            'TimelineEntry': [
+                {
+                    'state': state,
+                    'type': 2,
+                    'itemID': tv_show_id
+                }
+            ]
+        }
 
-    for show in tv_shows:
-        key = show.ratingKey
-        title = show.title
+    # Delete removed shows
+    for show in get_all_tv_shows():
+        tv_show_id = show[0]
 
-        cur.execute("INSERT INTO tv_show VALUES (?, ?)", (key, title))
+        try:
+            plex.fetch_tv_show_item(tv_show_id)
+        except plex.get_not_found_exception():
+            events.plex_alert(gen_data(9, tv_show_id))
+
+    # Insert new shows
+    shows = plex.get_all_tv_shows()
+    for show in shows:
+        tv_show_id = show.ratingKey
+
+        if not get_tv_show(tv_show_id):
+            events.plex_alert(gen_data(0, tv_show_id))
 
 
 def get_all_tv_shows():
