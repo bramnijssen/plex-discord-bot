@@ -84,17 +84,19 @@ class Commands(Cog):
     @command(
         aliases=["sub"], 
         brief="Subscribe to / Unsubscribe from a TV Show", 
-        help="Subscribe to / Unsubscribe from a TV Show from which you would like to receive notifications when new episodes have been added")
+        help="Subscribe to / Unsubscribe from a TV Show from which you would like to receive notifications when new "
+             "episodes have been added")
     async def subscribe(self, ctx, *, search_term):
         res = db.search_tv_show(search_term)
+        length = len(res)
         title = "Subscribe"
 
         def approve_embed(desc):
             return gen_embed(title, desc)
 
         async def approve(show):
-            tv_show_id = show["tv_show_id"]
-            tv_show = show["title"]
+            tv_show_id = show[0]
+            tv_show = show[1]
             discord_id = ctx.author.id
 
             # Define choice emojis
@@ -105,9 +107,10 @@ class Commands(Cog):
 
             # Check if already subscribed to TV show
             if is_subscribed:
-                embed = approve_embed(f"\U00002757 You are currently subscribed to {tv_show}. Do you want to unsubscribe?")
+                embed = approve_embed(f"\U00002757 You are currently subscribed to {tv_show}. Do you want to "
+                                      f"unsubscribe?")
                 embed_yes = approve_embed(f"{yes} Unsubscribed from {tv_show}")
-                embed_no = approve_embed(f"{no} Cancelled unsubscription of {tv_show}")
+                embed_no = approve_embed(f"{no} Cancelled subscription cancellation of {tv_show}")
 
             else:
                 embed = approve_embed(f"\U00002753 Do you want to subscribe to {tv_show}?")
@@ -153,17 +156,16 @@ class Commands(Cog):
                     break
 
         # If no results
-        if len(res) == 0:
+        if length == 0:
             await ctx.send(embed=approve_embed("\U0000274C No results"))
 
         # If one result
-        elif len(res) == 1:
+        elif length == 1:
             await approve(res[0])     
         
         # If many results
         else:
             page = 1
-            length = len(res)
             total = total_pages(length)
             add_msg = "Send the number, corresponding to the show to which you want to subscribe, in a new message"
 
@@ -186,7 +188,8 @@ class Commands(Cog):
                 reaction_task = asyncio.create_task(self.bot.wait_for("reaction_add", check=reaction_check))
                 message_task = asyncio.create_task(self.bot.wait_for("message", check=message_check))
 
-                done, pending = await asyncio.wait([reaction_task, message_task], timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
+                done, pending = await asyncio.wait([reaction_task, message_task], timeout=timeout,
+                                                   return_when=asyncio.FIRST_COMPLETED)
 
                 # Reaction on message
                 if reaction_task in done:
@@ -208,7 +211,8 @@ class Commands(Cog):
                                 page += 1
                         
                         # Send/Edit message
-                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, number_list, title, add_msg=add_msg), page, total)
+                        msg = await msg_embed_nav(ctx, msg, page_embed(page, res, number_list, title, add_msg=add_msg),
+                                                  page, total)
 
                     # Remove reaction
                     elif not from_dm(ctx):
@@ -236,4 +240,6 @@ class Commands(Cog):
     @subscribe.error
     async def subscribe_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(embed=gen_embed("Error", f"Please enter (parts of) the TV show's name to which you want to subscribe.\n Command usage: `.subscribe {ctx.command.signature}`"))
+            await ctx.send(embed=gen_embed("Error", f"Please enter (parts of) the TV show's name to which you want to "
+                                                    f"subscribe.\n Command usage: `.subscribe {ctx.command.signature}`")
+                           )

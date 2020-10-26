@@ -5,7 +5,7 @@ WORKDIR /plexdiscordbot
 COPY ./requirements.txt ./requirements.txt
 
 RUN apk update \
-&& apk add --no-cache gcc musl-dev postgresql-dev
+&& apk add --no-cache gcc musl-dev
 
 RUN pip install --no-cache-dir -r ./requirements.txt
 

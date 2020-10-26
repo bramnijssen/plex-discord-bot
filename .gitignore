@@ -5,3 +5,4 @@ docker-compose.yml
 # plexdiscordbot
 plexdiscordbot/src/__pycache__
 plexdiscordbot/src/.idea
+plexdiscordbot/src/db/db.db

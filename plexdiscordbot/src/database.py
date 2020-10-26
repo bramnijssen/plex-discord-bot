@@ -1,39 +1,25 @@
-from discord.ext.commands import Bot
 import plex
-import psycopg2 as psql
-from psycopg2.extensions import connection, cursor
-from psycopg2.extras import DictCursor
+import sqlite3
 import logging
-from time import sleep
-from os import getenv
+from os import path
 
-conn: connection
-cur: cursor
+conn: sqlite3.Connection
+cur: sqlite3.Cursor
 
 
 def init():
-    while True:
-        try:
-            global conn
-            conn = psql.connect(dbname=getenv("POSTGRES_DB"), user=getenv("POSTGRES_USER"),
-                                password=getenv("POSTGRES_PASSWORD"), host="postgres")
-            logging.info("DB connected")
-            break
-        except psql.OperationalError:
-            logging.info("Waiting 5 seconds for DB reconnect...")
-            sleep(5)
+    db = 'db/db.db'
+    exists = path.exists(db)
+
+    global conn
+    # Enable autocommit
+    conn = sqlite3.connect(db, isolation_level=None)
 
     global cur
-    cur = conn.cursor(cursor_factory=DictCursor)
+    cur = conn.cursor()
 
-    # If tv_show table empty (i.e. first boot), update db
-    cur.execute("""
-        SELECT COUNT(*)
-        FROM tv_show
-        LIMIT 1;
-    """)
-
-    if cur.fetchone()[0] == 0:
+    if not exists:
+        cur.executescript(open('db/init.sql').read())
         update_db()
 
 
@@ -47,106 +33,61 @@ def update_db():
         key = show.ratingKey
         title = show.title
 
-        cur.execute("""
-            INSERT INTO tv_show (plex_key, title)
-            VALUES (%s, %s);
-        """, (key, title))
-
-    conn.commit()
+        cur.execute("INSERT INTO tv_show VALUES (?, ?)", (key, title))
 
 
 def get_all_tv_shows():
-    cur.execute("""
-        SELECT title
-        FROM tv_show;
-    """)
+    cur.execute("SELECT * FROM tv_show")
 
     return cur.fetchall()
+
+
+def get_tv_show(tv_show_id):
+    cur.execute("SELECT * FROM tv_show WHERE tv_show_id = ?", (tv_show_id,))
+
+    return cur.fetchone()
 
 
 def search_tv_show(search):
-    cur.execute("""
-        SELECT *
-        FROM tv_show
-        WHERE title ILIKE %s;
-    """, (f"%{search}%",))
+    cur.execute("SELECT * FROM tv_show WHERE title LIKE ?", (f"%{search}%",))
 
     return cur.fetchall()
 
 
-def add_tv_show(plex_key, title):
-    cur.execute("""
-        INSERT INTO tv_show (plex_key, title)
-        VALUES (%s, %s);
-    """, (plex_key, title))
-
-    conn.commit()
+def add_tv_show(tv_show_id, title):
+    cur.execute("INSERT INTO tv_show VALUES (?, ?)", (tv_show_id, title))
 
 
-def delete_tv_show(plex_key):
-    cur.execute("""
-        DELETE FROM tv_show
-        WHERE plex_key = %s;
-    """, (plex_key,))
-
-    conn.commit()
+def delete_tv_show(tv_show_id):
+    cur.execute("DELETE FROM tv_show WHERE tv_show_id = ?", (tv_show_id,))
 
 
 def subscribe(discord_id, tv_show_id):
-    cur.execute("""
-        INSERT INTO subscription (discord_id, tv_show_id)
-        VALUES (%s, %s);
-    """, (discord_id, tv_show_id))
-
-    conn.commit()
+    cur.execute("INSERT INTO subscription VALUES (?, ?)", (discord_id, tv_show_id))
 
 
 def is_subscribed(discord_id, tv_show_id):
-    cur.execute("""
-        SELECT COUNT(*)
-        FROM subscription
-        WHERE discord_id = %s
-        AND tv_show_id = %s
-        LIMIT 1;
-    """, (discord_id, tv_show_id))
+    cur.execute("SELECT * FROM subscription WHERE discord_id = ? AND tv_show_id = ? LIMIT 1", (discord_id, tv_show_id))
 
-    return cur.fetchone()[0] == 1
+    return cur.rowcount == 1
 
 
 def unsubscribe(discord_id, tv_show_id):
-    cur.execute("""
-        DELETE FROM subscription
-        WHERE discord_id = %s
-        AND tv_show_id = %s;
-    """, (discord_id, tv_show_id))
-
-    conn.commit()
+    cur.execute("DELETE FROM subscription WHERE discord_id = ? AND tv_show_id = ?", (discord_id, tv_show_id))
 
 
 def get_subscriptions(discord_id):
-    cur.execute("""
-        SELECT t.title
-        FROM tv_show t
-        INNER JOIN subscription s ON t.tv_show_id = s.tv_show_id
-        WHERE s.discord_id = %s
-    """, (discord_id,))
+    cur.execute("SELECT * FROM tv_show t INNER JOIN subscription s ON t.tv_show_id = s.tv_show_id "
+                "WHERE s.discord_id = ?", (discord_id,))
+
+    return cur.fetchall()
+
+
+def get_subscriptions_via_key(tv_show_id):
+    cur.execute("SELECT * FROM subscription WHERE tv_show_id = ?", (tv_show_id,))
 
     return cur.fetchall()
 
 
 def delete_subscriptions(discord_id):
-    cur.execute("""
-        DELETE FROM subscription
-        WHERE discord_id = %s;
-    """, (discord_id,))
-
-
-def get_subscriptions_from_plex_key(key):
-    cur.execute("""
-        SELECT *
-        FROM subscription s
-        INNER JOIN tv_show t ON s.tv_show_id = t.tv_show_id
-        WHERE t.plex_key = %s;
-    """, (key,))
-
-    return cur.fetchall()
+    cur.execute("DELETE FROM subscription WHERE discord_id = ?", (discord_id,))

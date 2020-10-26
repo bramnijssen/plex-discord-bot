@@ -64,14 +64,14 @@ def total_pages(length):
 
 
 def bullet_list(db_result, i, desc):
-    show = db_result[i]["title"]
+    show = db_result[i][1]
 
     desc += f"- {show}\n"
     return desc
 
 
 def number_list(db_result, i, desc):
-    show = db_result[i]["title"]
+    show = db_result[i][1]
 
     desc += f"{i + 1} | {show}\n"
     return desc

@@ -1,7 +1,6 @@
 from discord.ext.commands import Cog, Bot
 from os import getenv
 from helpers import gen_embed
-import discord
 import logging
 import database as db
 import plex
@@ -73,7 +72,7 @@ class Events(Cog):
                     episode = plex.fetch_tv_show_item(episode_key)
                     
                     show_key = episode.grandparentRatingKey
-                    subs = db.get_subscriptions_from_plex_key(show_key)
+                    subs = db.get_subscriptions_via_key(show_key)
 
                     # If show has subscribers
                     if subs:
@@ -91,7 +90,8 @@ class Events(Cog):
                         summary = episode.summary
 
                         # Generate embed
-                        embed = gen_embed(f'Subscriptions - {show_title}', f"A new episode of {show_title} has been added to the server!")
+                        embed = gen_embed(f'Subscriptions - {show_title}',
+                                          f"A new episode of {show_title} has been added to the server!")
                         embed.add_field(name="Title", value=episode_title)
                         embed.add_field(name="Season", value=season_number)
                         embed.add_field(name="Episode", value=episode_number)
@@ -102,7 +102,7 @@ class Events(Cog):
 
                         # Send message to subscribed users
                         for sub in subs:
-                            user = self.bot.get_user(sub['discord_id'])
+                            user = self.bot.get_user(sub[0])
                             await user.send(embed=embed)
 
             # Item deleted
@@ -111,27 +111,27 @@ class Events(Cog):
                 # Show deleted
                 if data['TimelineEntry'][0]['type'] == 2:
                     show_key = int(data['TimelineEntry'][0]['itemID'])
-                    subs = db.get_subscriptions_from_plex_key(show_key)
+                    subs = db.get_subscriptions_via_key(show_key)
 
                     # If show has subscribers
                     if subs:
-                        show_title = subs[0]['title']
-                        tv_show_id = subs[0]['tv_show_id']
+                        show_title = db.get_tv_show(show_key)[1]
 
                         # Generate embed
-                        embed = gen_embed(f'Subscription Removed - {show_title}', f"Your subscription for {show_title} has been removed since the show has been removed from the server.")
+                        embed = gen_embed(f'Subscription Removed - {show_title}',
+                                          f"Your subscription for {show_title} has been removed since the show has been"
+                                          f" removed from the server.")
 
                         # Send message to subscribed users and remove subscription
                         for sub in subs:
-                            discord_id = sub['discord_id']
+                            discord_id = sub[0]
 
                             user = self.bot.get_user(discord_id)
-                            db.unsubscribe(discord_id, tv_show_id)
+                            db.unsubscribe(discord_id, show_key)
                             await user.send(embed=embed)
 
                     # Delete show from database
                     db.delete_tv_show(show_key)
-
 
     def plex_alert(self, data):               
         self.bot.loop.create_task(self.process_alert(data))

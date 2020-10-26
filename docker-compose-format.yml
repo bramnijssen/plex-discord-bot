@@ -1,13 +1,6 @@
 version: '3.8'
 
 services:
-  
-  postgres:
-    build: ./postgres
-    restart: always
-    image: plexdiscordbot_postgres
-    env_file:
-      - .env
 
   plexdiscordbot:
     build: 
@@ -16,5 +9,3 @@ services:
     image: plexdiscordbot
     env_file:
       - .env
-    depends_on:
-      - postgres
