@@ -58,7 +58,7 @@ def update_db(events):
 
 
 def get_all_tv_shows():
-    cur.execute("SELECT * FROM tv_show")
+    cur.execute("SELECT * FROM tv_show ORDER BY title")
 
     return cur.fetchall()
 
@@ -70,7 +70,7 @@ def get_tv_show(tv_show_id):
 
 
 def search_tv_show(search):
-    cur.execute("SELECT * FROM tv_show WHERE title LIKE ?", (f"%{search}%",))
+    cur.execute("SELECT * FROM tv_show WHERE title LIKE ? ORDER BY title", (f"%{search}%",))
 
     return cur.fetchall()
 
@@ -99,7 +99,7 @@ def unsubscribe(discord_id, tv_show_id):
 
 def get_subscriptions(discord_id):
     cur.execute("SELECT * FROM tv_show t INNER JOIN subscription s ON t.tv_show_id = s.tv_show_id "
-                "WHERE s.discord_id = ?", (discord_id,))
+                "WHERE s.discord_id = ? ORDER BY t.title", (discord_id,))
 
     return cur.fetchall()
 
