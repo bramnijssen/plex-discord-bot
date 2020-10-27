@@ -18,7 +18,7 @@ class Commands(Cog):
     @command(
         aliases=["shows"],
         name="tvshows", 
-        help="Lists available TV Shows")
+        help="Lists available TV Shows.")
     async def tv_shows(self, ctx: Context):
         tv_shows = db.get_all_tv_shows()
         title = "TV Shows"
@@ -29,7 +29,7 @@ class Commands(Cog):
     # List subscriptions
     @command(
         aliases=["subs"],
-        help="Lists subscriptions")
+        help="Lists subscriptions.")
     async def subscriptions(self, ctx: Context):
         subs = db.get_subscriptions(ctx.author.id)
         title = "Subscriptions"
@@ -83,9 +83,8 @@ class Commands(Cog):
     # Change notification setting for TV Show
     @command(
         aliases=["sub"], 
-        brief="Subscribe to / Unsubscribe from a TV Show", 
-        help="Subscribe to / Unsubscribe from a TV Show from which you would like to receive notifications when new "
-             "episodes have been added")
+        help="Search for a TV show to which you want to subscribe / unsubscribe. When subscribed to a TV show, you will"
+             " receive a notification when a new episode of that TV show has been added to the server.")
     async def subscribe(self, ctx, *, search_term):
         res = db.search_tv_show(search_term)
         length = len(res)
@@ -241,5 +240,22 @@ class Commands(Cog):
     async def subscribe_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(embed=gen_embed("Error", f"Please enter (parts of) the TV show's name to which you want to "
-                                                    f"subscribe.\n Command usage: `.subscribe {ctx.command.signature}`")
+                                                    f"subscribe.\n Command usage: "
+                                                    f"`.sub | .subscribe {ctx.command.signature}`")
                            )
+
+    @command(help="Shows this message.")
+    async def help(self, ctx):
+        embed = gen_embed('Available Commands', 'Below commands can be executed:')
+
+        for command in self.bot.commands:
+            names = command.aliases
+            names.append(command.name)
+            title = '.' + ' | .'.join(names)
+
+            if command.signature:
+                title += f' {command.signature}'
+
+            embed.add_field(name=title, value=command.help, inline=False)
+            
+        await ctx.send(embed=embed)
