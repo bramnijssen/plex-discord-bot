@@ -1,8 +1,8 @@
-.vscode
-docker-compose.yml
-.env
+/.vscode
+/docker-compose.yml
+/.env
 
 # plexdiscordbot
-plexdiscordbot/src/__pycache__
-plexdiscordbot/src/.idea
-plexdiscordbot/src/db/db.db
+/plexdiscordbot/src/__pycache__
+/plexdiscordbot/src/.idea
+/plexdiscordbot/src/db/db.db
