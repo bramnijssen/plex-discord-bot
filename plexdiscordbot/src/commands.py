@@ -14,29 +14,6 @@ class Commands(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    # List all TV shows
-    @command(
-        aliases=["shows"],
-        name="tvshows", 
-        help="Lists available TV Shows.")
-    async def tv_shows(self, ctx: Context):
-        tv_shows = db.get_all_tv_shows()
-        title = "TV Shows"
-        no_res_desc = "No TV Shows available"
-        
-        await self.spread_list(tv_shows, title, no_res_desc, ctx)
-
-    # List subscriptions
-    @command(
-        aliases=["subs"],
-        help="Lists subscriptions.")
-    async def subscriptions(self, ctx: Context):
-        subs = db.get_subscriptions(ctx.author.id)
-        title = "Subscriptions"
-        no_res_desc = "You have no subscriptions"
-
-        await self.spread_list(subs, title, no_res_desc, ctx)
-
     # List spread across pages
     async def spread_list(self, res, title, no_res_desc, ctx):
         page = 1
@@ -79,6 +56,29 @@ class Commands(Cog):
                 except asyncio.TimeoutError:
                     await msg_timeout(msg, title)
                     break
+
+    # List all TV shows
+    @command(
+        aliases=["shows"],
+        name="tvshows", 
+        help="Lists available TV Shows.")
+    async def tv_shows(self, ctx: Context):
+        tv_shows = db.get_all_tv_shows()
+        title = "TV Shows"
+        no_res_desc = "No TV Shows available"
+        
+        await self.spread_list(tv_shows, title, no_res_desc, ctx)
+
+    # List subscriptions
+    @command(
+        aliases=["subs"],
+        help="Lists subscriptions.")
+    async def subscriptions(self, ctx: Context):
+        subs = db.get_subscriptions(ctx.author.id)
+        title = "Subscriptions"
+        no_res_desc = "You have no subscriptions"
+
+        await self.spread_list(subs, title, no_res_desc, ctx)
 
     # Change notification setting for TV Show
     @command(
@@ -166,7 +166,7 @@ class Commands(Cog):
         else:
             page = 1
             total = total_pages(length)
-            add_msg = "Send the number, corresponding to the show to which you want to subscribe, in a new message"
+            add_msg = "Send the number, corresponding to the show to which you want to subscribe, in a new message."
 
             # Send message and add reactions
             msg: discord.Message = await ctx.send(embed=page_embed(page, res, number_list, title, add_msg=add_msg))

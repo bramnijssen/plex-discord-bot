@@ -51,6 +51,7 @@ async def msg_embed_nav(ctx, msg, embed, page, total):
 
 async def msg_timeout(msg, title):
     await msg.edit(embed=gen_embed(title, f"\U000023F0 Timeout reached after {timeout} seconds"))
+    await msg.clear_reactions()
 
 
 def total_pages(length):
