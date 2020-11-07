@@ -18,15 +18,19 @@ def init(events):
     global cur
     cur = conn.cursor()
 
+    logging.info("Updating DB...")
     if not exists:
         cur.executescript(open('db/init.sql').read())
         
-    update_db(events)
+        shows = plex.get_all_tv_shows()
+        for show in shows:
+            add_tv_show(show.ratingKey, show.title)
+        
+    else:    
+        update_db(events) 
 
 
 def update_db(events):
-    logging.info("Updating DB...")
-
     def gen_data(state, tv_show_id):
         return {
             'type': 'timeline',
