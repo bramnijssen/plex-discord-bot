@@ -20,7 +20,7 @@ Server Members Intent has to be turned on (located in Privileged Gateway Intents
 1. Provide info in the .env.example file
     * PDB_BOT_TOKEN: Token of the created bot.
     * PDB_NEW_SHOW_CHANNEL_ID: Channel ID of the channel in the server in which messages will be sent when a new show has been added to the Plex server. See [this guide](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-) on how to retrieve a channel's ID. If you do not wish to use this feature, then remove the entire line containing the variable from the file.
-    * PDB_PLEX_BASEURL: The IP or URL of the Plex server (e.g. http://localhost:32400/).
+    * PDB_PLEX_BASEURL: The IP or URL of the Plex server (e.g. http://10.0.0.1:32400/). Remember to specify the full private IP address of the device on which the Plex server is running, because in the case of having the bot run on the same device as the Plex server and specifying `localhost` as the IP, `localhost` will point to the Docker container's own network and thus not find the server. It is therefor also recommended to, if not already setup, set a static IP for the device on which the Plex server is running.
     * PDB_PLEX_TOKEN: Token to access Plex. See [this guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/) on how to retrieve the token.
     * PDB_PLEX_TV_SHOWS: The name of the TV shows library. Plex's default is "TV Shows" (without quotes).
 1. Rename .env.example to .env
