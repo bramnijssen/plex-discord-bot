@@ -92,9 +92,9 @@ def subscribe(discord_id, tv_show_id):
 
 
 def is_subscribed(discord_id, tv_show_id):
-    cur.execute("SELECT * FROM subscription WHERE discord_id = ? AND tv_show_id = ? LIMIT 1", (discord_id, tv_show_id))
+    cur.execute("SELECT COUNT(*) FROM subscription WHERE discord_id = ? AND tv_show_id = ? LIMIT 1", (discord_id, tv_show_id))
 
-    return cur.rowcount == 1
+    return cur.fetchone()[0] == 1
 
 
 def unsubscribe(discord_id, tv_show_id):
