@@ -1,5 +1,5 @@
 # PlexDiscordBot
-Discord bot which notifies server members about Plex events. The bot is written in Python and designed to be run via Docker.
+Discord bot which notifies server members about Plex events. The bot is dockerized and written in Python.
 
 ## Features
 * Server members can (un)subscribe to TV Shows available on the connected Plex server.
@@ -16,7 +16,7 @@ Make sure you have:
 Server Members Intent has to be turned on (located in Privileged Gateway Intents). And the Permission Integer has to be set to 10304 (= Send Messages, Manage Messages, Add Reactions).
 
 ## Setup
-1. Clone the repository
+1. Clone the repository via `git clone https://github.com/bramnijssen/PlexDiscordBot.git`
 1. Provide info in the .env.example file
     * PDB_BOT_TOKEN: Token of the created bot.
     * PDB_NEW_SHOW_CHANNEL_ID: Channel ID of the channel in the server in which messages will be sent when a new show has been added to the Plex server. See [this guide](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-) on how to retrieve a channel's ID. If you do not wish to use this feature, then remove the entire line containing the variable from the file.
