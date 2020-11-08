@@ -7,5 +7,7 @@ services:
       context: ./plexdiscordbot
       target: prod
     image: plexdiscordbot
+    volumes:
+      - ./plexdiscordbot/src:/plexdiscordbot
     env_file:
       - .env
