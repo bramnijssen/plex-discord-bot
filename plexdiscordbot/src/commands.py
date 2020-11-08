@@ -54,7 +54,7 @@ class Commands(Cog):
                         await reaction.remove(user)
 
                 except asyncio.TimeoutError:
-                    await msg_timeout(msg, title)
+                    await msg_timeout(ctx, msg, title)
                     break
 
     # List all TV shows
@@ -151,7 +151,7 @@ class Commands(Cog):
                         await reaction.remove(user)
 
                 except asyncio.TimeoutError:
-                    await msg_timeout(msg, title)
+                    await msg_timeout(ctx, msg, title)
                     break
 
         # If no results
@@ -232,7 +232,7 @@ class Commands(Cog):
 
                 # Timeout
                 else:
-                    await msg_timeout(msg, title)
+                    await msg_timeout(ctx, msg, title)
                     break
 
     # If no search term provided
