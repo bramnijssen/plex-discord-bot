@@ -5,6 +5,7 @@ import logging
 import database as db
 import plex
 import datetime
+import asyncio
 
 
 def setup(bot):
@@ -47,8 +48,9 @@ class Events(Cog):
                     if channel_id:
 
                         # Wait for metadata
-                        stop = datetime.datetime.now() + datetime.timedelta(0, 10)
+                        stop = datetime.datetime.now() + datetime.timedelta(minutes=1)
                         while not show.summary and datetime.datetime.now() < stop:
+                            await asyncio.sleep(5)
                             show = plex.fetch_tv_show_item(show_key)
 
                         # Extract summary from show
