@@ -8,6 +8,9 @@ services:
       target: prod
     image: plexdiscordbot
     volumes:
-      - ./plexdiscordbot/src:/plexdiscordbot
+      - db:/plexdiscordbot/db
     env_file:
       - .env
+
+volumes:
+  db:
