@@ -80,8 +80,9 @@ class Events(Cog):
                     if subs:
 
                         # Wait for metadata
-                        stop = datetime.datetime.now() + datetime.timedelta(0, 10)
-                        while episode.title == f"Episode {episode.index}" and datetime.datetime.now() < stop:
+                        stop = datetime.datetime.now() + datetime.timedelta(minutes=1)
+                        while (not episode.summary or episode.title == f"Episode {episode.index}") and datetime.datetime.now() < stop:
+                            await asyncio.sleep(5)
                             episode = plex.fetch_tv_show_item(episode_key)
 
                         # Extract info from episode
