@@ -1,5 +1,5 @@
 /.vscode
-/docker-compose-debug.yml
+/docker-compose.override.yml
 /.env
 
 # plexdiscordbot
