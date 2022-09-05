@@ -6,7 +6,6 @@ services:
     build: 
       context: ./plexdiscordbot
       target: prod
-    image: plexdiscordbot
     volumes:
       - db:/plexdiscordbot/db
     env_file:

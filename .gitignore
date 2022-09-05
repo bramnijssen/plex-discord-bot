@@ -1,8 +1,6 @@
-/.vscode
-/docker-compose.override.yml
-/.env
+.vscode
+docker-compose.override.yml
+.env
 
-# plexdiscordbot
-/plexdiscordbot/src/__pycache__
-/plexdiscordbot/src/.idea
-/plexdiscordbot/src/db/db.db
+plexdiscordbot/src/__pycache__
+plexdiscordbot/src/db/db.db
