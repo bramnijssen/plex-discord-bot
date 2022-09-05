@@ -6,8 +6,8 @@ import discord
 import asyncio
 
 
-def setup(bot):
-    bot.add_cog(Commands(bot))
+async def setup(bot):
+    await bot.add_cog(Commands(bot))
 
 
 class Commands(Cog):

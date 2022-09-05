@@ -1,5 +1,6 @@
 import logging
 import discord
+import asyncio
 from discord.ext import commands
 from os import getenv
 
@@ -13,7 +14,11 @@ if __name__ == '__main__':
     # Init bot and link to commands
     bot = commands.Bot(command_prefix=".", intents=intents, help_command=None)
 
-    bot.load_extension("commands")
-    bot.load_extension("events")
+    async def main():
+        async with bot:
+            await bot.load_extension("commands")
+            await bot.load_extension("events")
 
-    bot.run(getenv("PDB_BOT_TOKEN"))
+            await bot.start(getenv("PDB_BOT_TOKEN"))
+
+    asyncio.run(main())
